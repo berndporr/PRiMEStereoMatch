@@ -507,7 +507,7 @@ int StereoMatch::captureChessboards(void)
 int StereoMatch::update_dataset(std::string dataset_name)
 {
 	curr_dataset = dataset_name;
-	std:string data_dir = "../data/";
+	std:string data_dir = "data/";
 	if((!dataset_name.compare("Cones"))|| (!dataset_name.compare("Teddy")))
 	{
 		left_img_filename = data_dir + dataset_name + std::string("/im2.png");

@@ -41,17 +41,12 @@ A heterogeneous and fully parallel stereo matching algorithm for depth estimatio
 * Software Libraries:
 	* OpenCV 3.0 or later - [Installation in Linux instructions](https://docs.opencv.org/3.4.0/d7/d9f/tutorial_linux_install.html)
 	* pthread library for non-OpenCL execution on the CPU
-	* OpenCL Library for execution on the GPU
 	* cmake v3.2, git
 
 ### Compilation 
-* Clone repo to the platform: `git clone https://github.com/PRiME-project/PRiMEStereoMatch.git`
-* Enter the base directory: `cd PRiMEStereoMatch/`.
-* Create a build directory: `mkdir build`
-* Enter the build directory: `cd build`
-* Invoke cmake to build the compilation files: `cmake ..` (Two dots are required in order to reference the base directory)
+* Invoke cmake to build the compilation files: `cmake .`
 * Compile the project with the generated makefile: `make -jN`. 
-	* Set N to the number of simultaneous threads supported on your compilation platform, e.g. `make -j8`.
+* Set N to the number of simultaneous threads supported on your compilation platform, e.g. `make -j8`.
 
 ### Deployment
 * Run the application from the build dir: `./PRiMEStereoMatch <program arguments>`
