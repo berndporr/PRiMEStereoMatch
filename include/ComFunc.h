@@ -25,15 +25,6 @@
 //POSIX Threads
 #include <pthread.h>
 
-//OpenCL Header
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#ifdef __APPLE__
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
-#include <CL/cl_ext.h>
-
 //OpenCV Header
 #include <opencv2/opencv.hpp>
 

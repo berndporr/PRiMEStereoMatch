@@ -40,7 +40,7 @@ float myCostGrd(float* lC, float* lG)
 
 int CVC::preprocess(const Mat& Img, Mat& GrdX)
 {
-	cv::cvtColor(Img, GrdX, CV_RGB2GRAY);
+    cv::cvtColor(Img, GrdX, cv::COLOR_RGB2GRAY);
 	cv::Sobel(GrdX, GrdX, CV_32F, 1, 0, 1);
 	return 0;
 }

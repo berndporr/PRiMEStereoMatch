@@ -35,9 +35,10 @@
  * The following code is already built on OpenCV 2.4.2.
  *
 /***************************************************************/
-#include "opencv2/core/core.hpp"
+#include <opencv2/opencv.hpp>
 #include <time.h>
 #include <omp.h>
+#include <opencv2/calib3d/calib3d_c.h>
 
 //Use the namespace of CV and STD
 using namespace std;

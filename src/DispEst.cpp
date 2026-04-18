@@ -7,8 +7,8 @@
   ---------------------------------------------------------------------------*/
 #include "DispEst.h"
 
-DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool ocl)
-    : lImg(l), rImg(r), maxDis(d), threads(t), useOCL(ocl)
+DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool)
+    : lImg(l), rImg(r), maxDis(d), threads(t)
 {
 #ifdef DEBUG_APP
     std::cout << "Disparity Estimation for Depth Analysis in Stereo Vision Applications." << std::endl;
@@ -54,92 +54,7 @@ DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool ocl)
     selector = new DispSel();
     postProcessor = new PP();
 
-    if(useOCL)
-    {
-		printf("Setting up OpenCL Environment\n");
-		//OpenCL Setup
-		context = 0;
-		commandQueue = 0;
-		device = 0;
-		numberOfMemoryObjects = 12;
-		for(int m = 0; m < (int)numberOfMemoryObjects; m++)
-			memoryObjects[m] = 0;
-
-		//cl_int numComputeUnits = 2;
-		if (!createContext(&context))
-		//if (!createSubDeviceContext(&context, numComputeUnits)) //Device Fission is not supported on Xeon Phi
-		{
-			cleanUpOpenCL(context, commandQueue, NULL, NULL, memoryObjects, numberOfMemoryObjects);
-			std::cerr << "Failed to create an OpenCL context. " << __FILE__ << ":"<< __LINE__ << std::endl;
-		}
-		if (!createCommandQueue(context, &commandQueue, &device))
-		{
-			cleanUpOpenCL(context, commandQueue, NULL, NULL, memoryObjects, numberOfMemoryObjects);
-			std::cerr << "Failed to create the OpenCL command queue. " << __FILE__ << ":"<< __LINE__ << std::endl;
-		}
-
-		width = (cl_int)wid;
-		height = (cl_int)hei;
-		channels = (cl_int)lImg.channels();
-
-		//OpenCL Buffers that are type dependent (in accending size order)
-//		if(imgType == CV_32F)
-//		{
-			bufferSize_2D = width * height * sizeof(cl_float);
-			bufferSize_3D = width * height * maxDis * sizeof(cl_float);
-//		}
-//		else if(imgType == CV_8U)
-//		{
-//			bufferSize_2D = width * height * sizeof(cl_uchar);
-//			bufferSize_3D = width * height * maxDis * sizeof(cl_uchar);
-//		}
-		//OpenCL Buffers that are always required
-		bufferSize_2D_8UC1 = width * height * sizeof(cl_uchar);
-
-		/* Create buffers for the left and right images, gradient data, cost volume, and disparity maps. */
-		bool createMemoryObjectsSuccess = true;
-		memoryObjects[CVC_LIMGR] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CVC_LIMGG] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CVC_LIMGB] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-
-		memoryObjects[CVC_RIMGR] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CVC_RIMGG] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CVC_RIMGB] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-
-		memoryObjects[CVC_LGRDX] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CVC_RGRDX] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-
-		memoryObjects[CV_LCV] = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize_3D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[CV_RCV] = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize_3D, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-
-		memoryObjects[DS_LDM] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D_8UC1, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		memoryObjects[DS_RDM] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, bufferSize_2D_8UC1, NULL, &errorNumber);
-		createMemoryObjectsSuccess &= checkSuccess(errorNumber);
-		if (!createMemoryObjectsSuccess)
-		{
-			cleanUpOpenCL(context, commandQueue, NULL, NULL, memoryObjects, numberOfMemoryObjects);
-			std::cerr << "Failed to create OpenCL buffers. " << __FILE__ << ":"<< __LINE__ << std::endl;
-		}
-
-		printf("Setting up OpenCL function constructors\n");
-		//OpenCL function constructors
-		constructor_cl  = new CVC_cl(&context, &commandQueue, device, &lImg, maxDis);
-		filter_cl       = new CVF_cl(&context, &commandQueue, device, &lImg, maxDis);
-		selector_cl = new DispSel_cl(&context, &commandQueue, device, &lImg, maxDis);
-    }
-
-	printf("Construction Complete\n");
+    printf("Construction Complete\n");
 }
 
 DispEst::~DispEst(void)
@@ -150,15 +65,6 @@ DispEst::~DispEst(void)
     delete filter;
     delete selector;
     delete postProcessor;
-
-    if(useOCL){
-		delete constructor_cl;
-		delete filter_cl;
-		delete selector_cl;
-
-		for(int m = 0; m < (int)numberOfMemoryObjects; ++m)
-			clReleaseMemObject(memoryObjects[m]);
-    }
 }
 
 int DispEst::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
@@ -180,7 +86,7 @@ int DispEst::setThreads(unsigned int newThreads)
 
 int DispEst::printCV(void)
 {
-	char filename[20];
+	char filename[256];
 	int ret_val = 0;
 
 	for (int i = 0; i < maxDis; ++i)
@@ -269,12 +175,6 @@ int DispEst::CostConst_CPU()
 	return 0;
 }
 
-int DispEst::CostConst_GPU()
-{
-	constructor_cl->buildCV(lImg, rImg, memoryObjects);
-	return 0;
-}
-
 //#############################################################################################################
 //# Cost Volume Filtering
 //#############################################################################################################
@@ -295,19 +195,6 @@ int DispEst::CostFilter_FGF()
 	return 0;
 }
 
-//TODO: Port FGF code to GPU
-int DispEst::CostFilter_GPU()
-{
-    //printf("OpenCL Cost Filtering Underway...\n");
-    filter_cl->preprocess(&memoryObjects[CVC_LIMGR], &memoryObjects[CVC_LIMGG], &memoryObjects[CVC_LIMGB]);
-    filter_cl->filterCV(&memoryObjects[CV_LCV]);
-    filter_cl->preprocess(&memoryObjects[CVC_RIMGR], &memoryObjects[CVC_RIMGG], &memoryObjects[CVC_RIMGB]);
-    filter_cl->filterCV(&memoryObjects[CV_RCV]);
-    //printf("Filtering Complete\n");
-	return 0;
-}
-
-
 int DispEst::DispSelect_CPU()
 {
     //printf("Left Selection...\n");
@@ -320,22 +207,7 @@ int DispEst::DispSelect_CPU()
 	return 0;
 }
 
-int DispEst::DispSelect_GPU()
-{
-	//printf("Left & Right Selection...\n");
-	selector_cl->CVSelect(memoryObjects, lDisMap, rDisMap);
-	return 0;
-}
-
 int DispEst::PostProcess_CPU()
-{
-    //printf("Post Processing Underway...\n");
-    postProcessor->processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);
-    //printf("Post Processing Complete\n");
-	return 0;
-}
-
-int DispEst::PostProcess_GPU()
 {
     //printf("Post Processing Underway...\n");
     postProcessor->processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);

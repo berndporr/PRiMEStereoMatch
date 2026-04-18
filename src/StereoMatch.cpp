@@ -204,42 +204,21 @@ int StereoMatch::compute(float& de_time_ms)
 		std::cout <<  "Disparity Estimation Started..." << std::endl;
 #endif // DEBUG_APP
 
-		if(de_mode == OCV_DE || !gotOCLDev)
-		{
-			cvc_time = get_rt();
-			SMDE->CostConst();
-			cvc_time = get_rt() - cvc_time;
-
-			cvf_time = get_rt();
-			SMDE->CostFilter_FGF();
-			cvf_time = get_rt()- cvf_time;
-
-			dispsel_time = get_rt();
-			SMDE->DispSelect_CPU();
-			dispsel_time = get_rt() - dispsel_time;
-
-			pp_time = get_rt();
-			SMDE->PostProcess_CPU();
-			pp_time = get_rt() - pp_time;
-		}
-		else
-		{
-			cvc_time = get_rt();
-			SMDE->CostConst_GPU();
-			cvc_time = get_rt() - cvc_time;
-
-			cvf_time = get_rt();
-			SMDE->CostFilter_GPU();
-			cvf_time = get_rt()- cvf_time;
-
-			dispsel_time = get_rt();
-			SMDE->DispSelect_GPU();
-			dispsel_time = get_rt() - dispsel_time;
-
-			pp_time = get_rt();
-			SMDE->PostProcess_GPU();
-			pp_time = get_rt() - pp_time;
-		}
+		cvc_time = get_rt();
+		SMDE->CostConst();
+		cvc_time = get_rt() - cvc_time;
+		
+		cvf_time = get_rt();
+		SMDE->CostFilter_FGF();
+		cvf_time = get_rt()- cvf_time;
+		
+		dispsel_time = get_rt();
+		SMDE->DispSelect_CPU();
+		dispsel_time = get_rt() - dispsel_time;
+		
+		pp_time = get_rt();
+		SMDE->PostProcess_CPU();
+		pp_time = get_rt() - pp_time;
 #ifdef DEBUG_APP
 		std::cout <<  "Disparity Estimation Complete." << std::endl;
 #endif // DEBUG_APP

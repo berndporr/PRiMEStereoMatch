@@ -6,11 +6,10 @@
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------*/
 #include "ComFunc.h"
-#include "oclUtil.h"
 #include "StereoMatch.h"
 #include <chrono>
 #include <thread>
-#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 //Functions in main
 void getDepthMap(StereoMatch *sm);
@@ -18,7 +17,6 @@ void HCI(StereoMatch *sm);
 
 //Global variables
 bool end_de = false;
-int nOpenCLDev = 0;
 int sgbm_mode = StereoSGBM::MODE_HH;
 
 int main(int argc, const char* argv[])
@@ -26,15 +24,14 @@ int main(int argc, const char* argv[])
     //#############################################################################################################
     //# Introduction and Setup - poll for OpenCL devices
     //#############################################################################################################
-	nOpenCLDev = openCLdevicepoll();
 #ifdef DISPLAY
-	namedWindow("InputOutput", CV_WINDOW_AUTOSIZE);
+	namedWindow("InputOutput");
 #endif
 	//#############################################################################################################
     //# Start Application Processes
     //#############################################################################################################
 	printf("Starting Stereo Matching Application.\n");
-	StereoMatch *sm = new StereoMatch(argc, argv, nOpenCLDev);
+	StereoMatch *sm = new StereoMatch(argc, argv);
 	//printf("MAIN: Press h for help text.\n\n");
 
 	std::thread de_thread;
@@ -148,14 +145,7 @@ void HCI(StereoMatch *sm)
             case 'm':
             {
 				if(sm->MatchingAlgorithm == STEREO_GIF){
-					if(nOpenCLDev){
-						sm->de_mode = sm->de_mode ? OCV_DE : OCL_DE;
-						printf("| m: STEREO_GIF Matching Algorithm:\n");
-						printf("| m: Mode changed to %s |\n", sm->de_mode ? "OpenCL on the GPU" : "C++ & pthreads on the CPU");
-					}
-					else{
 						printf("| m: Platform must contain an OpenCL compatible device to use OpenCL Mode.\n");
-					}
 				}
 				else if(sm->MatchingAlgorithm == STEREO_SGBM){
 					sgbm_mode = (sgbm_mode == StereoSGBM::MODE_HH ? StereoSGBM::MODE_SGBM :

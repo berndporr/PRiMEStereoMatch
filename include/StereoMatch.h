@@ -35,7 +35,7 @@ struct Resolution{
 class StereoMatch
 {
 public:
-	StereoMatch(int argc, const char *argv[], int gotOpenCLDev);
+	StereoMatch(int argc, const char *argv[], int gotOpenCLDev = 0);
 	~StereoMatch(void);
 
 	int de_mode;
