@@ -15,7 +15,7 @@
 // #############################################################################
 // # SM Preprocessing that we don't want to repeat
 // #############################################################################
-StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_de(false), user_dataset(false), ground_truth_data(false)
+StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev)
 {
 #ifdef DEBUG_APP
 	std::cout << "Stereo Matching for Depth Estimation." << std::endl;
@@ -27,9 +27,6 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_d
 	// #########################################################################
 	if (parse_cli(argc, argv))
 		exit(1);
-
-	unsigned int cam_height = 376; //  376  (was 480),  720, 1080, 1242
-	unsigned int cam_width = 1344; // 1344 (was 1280), 2560, 3840, 4416
 
 	maxDis = 64;
 	de_mode = OCL_DE;
@@ -146,7 +143,6 @@ int StereoMatch::compute(float &de_time_ms)
 int StereoMatch::update_dataset(std::string dataset_name)
 {
 	curr_dataset = dataset_name;
-std:
 	string data_dir = "data/";
 	if ((!dataset_name.compare("Cones")) || (!dataset_name.compare("Teddy")))
 	{

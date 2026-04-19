@@ -5,7 +5,7 @@
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------*/
-#include "Prime_stereo_match.h"
+#include "PrimeStereoMatch.h"
 
 PrimeStereoMatch::PrimeStereoMatch(int height, int width, const int maxDisparity, int numThreads)
     : hei(height), wid(width), maxDis(maxDisparity), threads(numThreads)
@@ -54,9 +54,11 @@ int PrimeStereoMatch::CostConst()
 {
     int ret_val = 0;
 
-    if (ret_val = constructor.preprocess(lImg, lGrdX))
+    ret_val = constructor.preprocess(lImg, lGrdX);
+    if (ret_val)
         return ret_val;
-    if (ret_val = constructor.preprocess(rImg, rGrdX))
+    ret_val = constructor.preprocess(rImg, rGrdX);
+    if (ret_val)
         return ret_val;
 
 // Build Cost Volume
@@ -165,9 +167,10 @@ int PrimeStereoMatch::PostProcess_CPU()
     return 0;
 }
 
-void PrimeStereoMatch::process() {
-	CostConst();
-	CostFilter_FGF();
-	DispSelect_CPU();
-	PostProcess_CPU();
+void PrimeStereoMatch::process()
+{
+    CostConst();
+    CostFilter_FGF();
+    DispSelect_CPU();
+    PostProcess_CPU();
 }

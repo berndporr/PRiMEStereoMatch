@@ -1,7 +1,6 @@
 
 
-/***************************************************************/
-/*
+/***************************************************************
 *   Distribution code Version 1.1 -- 09/21/2014 by Qi Zhang Copyright 2014, The Chinese University of Hong Kong.
 *
 *   The Code is created based on the method described in the following paper
@@ -14,26 +13,23 @@
 *
 *   The code and the algorithm are for non-comercial use only.
 *
-/***************************************************************/
+***************************************************************/
 
 #ifndef JOINT_WMF_H
 #define JOINT_WMF_H
 
-/***************************************************************/
-/*
+/***************************************************************
  * Standard IO library is required.
  * STL String library is required.
  *
-/***************************************************************/
+***************************************************************/
 #include <cstdio>
 #include <string>
 
-/***************************************************************/
-/*
+/***************************************************************
  * OpenCV 2.4 is required.
  * The following code is already built on OpenCV 2.4.2.
- *
-/***************************************************************/
+***************************************************************/
 #include <opencv2/opencv.hpp>
 #include <time.h>
 #include <omp.h>
@@ -188,8 +184,6 @@ public:
 
 		// Configuration and declaration
 		int rows = I.rows, cols = I.cols;
-		int alls = rows * cols;
-		int winSize = (2 * r + 1) * (2 * r + 1);
 		Mat outImg = I.clone();
 
 		// Handle Mask
@@ -449,10 +443,10 @@ private:
 		return (float)(realtime.tv_sec * 1000000 + realtime.tv_nsec / 1000);
 	}
 
-	/***************************************************************/
-	/* Function: updateBCB
+	/***************************************************************
+	 * Function: updateBCB
 	 * Description: maintain the necklace table of BCB
-	/***************************************************************/
+	 ***************************************************************/
 	static inline void updateBCB(int &num, int *f, int *b, int i, int v)
 	{
 
@@ -480,10 +474,10 @@ private:
 		num += v;
 	}
 
-	/***************************************************************/
-	/* Function: float2D
+	/***************************************************************
+	 * Function: float2D
 	 * Description: allocate a 2D float array with dimension "dim1 x dim2"
-	/***************************************************************/
+	 ***************************************************************/
 	static float **float2D(int dim1, int dim2)
 	{
 		float **ret = new float *[dim1];
@@ -494,20 +488,20 @@ private:
 		return ret;
 	}
 
-	/***************************************************************/
-	/* Function: float2D_release
+	/***************************************************************
+	 * Function: float2D_release
 	 * Description: deallocate the 2D array created by float2D()
-	/***************************************************************/
+	 ***************************************************************/
 	static void float2D_release(float **p)
 	{
 		delete[] p[0];
 		delete[] p;
 	}
 
-	/***************************************************************/
-	/* Function: int2D
+	/***************************************************************
+	 * Function: int2D
 	 * Description: allocate a 2D integer array with dimension "dim1 x dim2"
-	/***************************************************************/
+	 ***************************************************************/
 	static int **int2D(int dim1, int dim2)
 	{
 		int **ret = new int *[dim1];
@@ -519,22 +513,22 @@ private:
 		return ret;
 	}
 
-	/***************************************************************/
-	/* Function: int2D_release
+	/***************************************************************
+	 * Function: int2D_release
 	 * Description: deallocate the 2D array created by int2D()
-	/***************************************************************/
+	 ***************************************************************/
 	static void int2D_release(int **p)
 	{
 		delete[] p[0];
 		delete[] p;
 	}
 
-	/***************************************************************/
-	/* Function: featureIndexing
+	/***************************************************************
+	 * Function: featureIndexing
 	 * Description: convert uchar feature image "F" to CV_32SC1 type.
 	 *				If F is 3-channel, perform k-means clustering
 	 *				If F is 1-channel, only perform type-casting
-	/***************************************************************/
+	 ***************************************************************/
 	static void featureIndexing(Mat &F, float **&wMap, int &nF, float sigmaI, string weightType)
 	{
 
@@ -733,14 +727,14 @@ private:
 		F = FNew;
 	}
 
-	/***************************************************************/
-	/* Function: from32FTo32S
+	/***************************************************************
+	 * Function: from32FTo32S
 	 * Description: adaptive quantization for changing a floating-point 1D image to integer image.
 	 *				The adaptive quantization strategy is based on binary search, which searches an
 	 *				upper bound of quantization error.
 	 *				The function also return a mapping between quantized value (32F) and quantized index (32S).
 	 *				The mapping is used to convert integer image back to floating-point image after filtering.
-	/***************************************************************/
+	 ***************************************************************/
 	static void from32FTo32S(Mat &img, Mat &outImg, int nI, float *mapping)
 	{
 
@@ -828,10 +822,10 @@ private:
 		outImg = retImg;
 	}
 
-	/***************************************************************/
-	/* Function: from32STo32F
+	/***************************************************************
+	 * Function: from32STo32F
 	 * Description: convert the quantization index image back to the floating-point image accroding to the mapping
-	/***************************************************************/
+	 ***************************************************************/
 	static void from32STo32F(Mat &img, Mat &outImg, float *mapping)
 	{
 

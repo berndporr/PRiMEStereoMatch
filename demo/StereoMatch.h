@@ -8,7 +8,7 @@
 #ifndef STEREOMATCH_H
 #define STEREOMATCH_H
 
-#include "Prime_stereo_match.h"
+#include "PrimeStereoMatch.h"
 
 #define NO_MASKS 0
 #define MASK_NONE 1
@@ -39,16 +39,17 @@ public:
 
 	int compute(float& de_time);
 	int update_dataset(std::string dataset_name);
-	bool user_dataset;
+	bool user_dataset = false;
 
 	//StereoSGBM Variables
 	cv::Ptr<StereoSGBM> ssgbm;
 
 	//Stereo GIF Variables
-	unsigned int subsample_rate = 4;;
+	unsigned int subsample_rate = 4;
 private:
+
 	//Variables
-	bool end_de, recaptureChessboards, recalibrate;
+	bool end_de = false;
 	int gotOCLDev;
 	char cap_key;
 
@@ -56,7 +57,7 @@ private:
 	std::string gt_img_filename, mask_occl_filename, mask_disc_filename;
 	std::string curr_dataset;
 	std::mutex input_data_m;
-	bool ground_truth_data;
+	bool ground_truth_data = false;
 	int mask_mode_next;
 	int scale_factor, scale_factor_next;
 

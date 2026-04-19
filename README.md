@@ -26,39 +26,25 @@ A heterogeneous and fully parallel stereo matching algorithm for depth estimatio
 
 ## Implementation Details
 
- * C++ parallelism is introduced via the POSIX threads (pthreads) library. Disparity level parallelism is supported, enabling up to 64 concurrent threads.
+C++ parallelism is introduced via the POSIX threads (pthreads) library.
+Disparity level parallelism is supported, enabling up to 64 concurrent threads.
 
-## Installation
+## Prerequisites
+ * OpenCV 4.0 or later
+ * cmake v3.20 or later
+ * openMP
 
-### Prerequisites
-* Software Libraries:
-	* OpenCV 4.0 or later
-	* pthreads
-	* cmake v3.20 or later
+## Compilation and installation
 
-### Compilation 
-* Invoke cmake to build the compilation files: `cmake .`
-* Compile the project with the generated makefile: `make -jN`. 
-* Set N to the number of simultaneous threads supported on your compilation platform, e.g. `make -j8`.
+ * `cmake .`
+ * `make`
+ * `sudo make install`
 
-### How to run
+## Demo application
+
+The [demo](demo) directory contains an example application how to detect disparity.
 
 Run the application with: `/PRiMEStereoMatch [[left.png right.png] disparity.png]`
-
-## Directory Structure
-
-```
-folders:
-	data			- program data including input images, stereo camera parameters, calibration images
-	docs			- images for the readme & wiki
-	include			- Project header files (h/hpp)
-	src			- Project source files (c/cpp)
-	
-files:
-	CMakeLists.txt		- cmake project compilation file
-	LICENCE.txt			- license file
-	README.md			- this readme file
-```
 
 ## References
 
@@ -118,4 +104,5 @@ Bibtex:
 
 ### Further development
 
-Updated by Bernd Porr for openCV 4.0.
+Updated by Bernd Porr for openCV 4.0 and turned into a library.
+

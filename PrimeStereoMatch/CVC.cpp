@@ -159,7 +159,6 @@ int CVC::buildCV_right(const Mat &lImg, const Mat &rImg, const Mat &lGrdX, const
 {
 	int wid = lImg.cols;
 	int border = wid - d;
-	int hei = lImg.rows;
 
 	for (int y = 0; y < lImg.rows; ++y)
 	{

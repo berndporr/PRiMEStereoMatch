@@ -37,8 +37,6 @@ void HCI(StereoMatch &sm)
 {
 	// User interface input handler
 	char key = ' ';
-	float de_time;
-	int dataset_idx = 0;
 
 	imshow("InputOutput", sm.display_container);
 
@@ -65,24 +63,6 @@ void HCI(StereoMatch &sm)
 			printf("|   m:      STEREO_GIF:  OpenCL <-> pthreads.\n");
 			printf("|   m:      STEREO_SGBM: MODE_SGBM, MODE_HH, MODE_SGBM_3WAY\n");
 			printf("|   -/=: Increase or decrease the error threshold\n");
-			printf("|-------------------------------------------------------------------|\n");
-			printf("| Current Options:\n");
-			printf("|   a:   Matching Algorithm: %s\n", sm.MatchingAlgorithm ? "STEREO_GIF" : "STEREO_SGBM");
-			printf("|   d:   Dataset: %s\n", sm.MatchingAlgorithm ? "STEREO_GIF" : "STEREO_SGBM");
-			printf("|   -/=: Error Threshold: %d\n", sm.error_threshold);
-			printf("|-------------------------------------------------------------------|\n");
-			break;
-		}
-		case 'd':
-		{
-			if (sm.user_dataset)
-			{
-				printf("| d: User dataset has been specified.\n");
-				break;
-			}
-			dataset_idx = dataset_idx < dataset_names.size() - 1 ? dataset_idx + 1 : 0;
-			printf("| d: Dataset changed to: %s\n", dataset_names[dataset_idx].c_str());
-			sm.update_dataset(dataset_names[dataset_idx]);
 			break;
 		}
 		case 'o':

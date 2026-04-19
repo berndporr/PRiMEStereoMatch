@@ -5,12 +5,12 @@
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------*/
-#include "prime_stereo_match/ComFunc.h"
-#include "prime_stereo_match/CVC.h"
-#include "prime_stereo_match/CVF.h"
-#include "prime_stereo_match/DispSel.h"
-#include "prime_stereo_match/PP.h"
-#include "prime_stereo_match/fastguidedfilter.h"
+#include "PrimeStereoMatch/ComFunc.h"
+#include "PrimeStereoMatch/CVC.h"
+#include "PrimeStereoMatch/CVF.h"
+#include "PrimeStereoMatch/DispSel.h"
+#include "PrimeStereoMatch/PP.h"
+#include "PrimeStereoMatch/fastguidedfilter.h"
 
 //
 // Top-level Disparity Estimation Class
