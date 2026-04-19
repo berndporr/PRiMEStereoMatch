@@ -9,12 +9,7 @@
 #define STEREOMATCH_H
 
 #include "ComFunc.h"
-#include "StereoCalib.h"
 #include "DispEst.h"
-#include "args.hxx"
-
-#define DE_VIDEO 1
-#define DE_IMAGE 2
 
 #define NO_MASKS 0
 #define MASK_NONE 1
@@ -42,7 +37,6 @@ public:
 	int MatchingAlgorithm;
 	int error_threshold;
 	int mask_mode;
-	int media_mode;
 	cv::Mat display_container;
 
 	int compute(float& de_time);
@@ -97,7 +91,6 @@ private:
 	cv::Mat gtFrame;
 
 	//StereoSGBM Variables
-	StereoCameraProperties camProps;
 	double minVal, maxVal;
 	double minVal_gt, maxVal_gt;
 	cv::Mat imgDisparity16S;
@@ -109,8 +102,6 @@ private:
 	//Function prototypes
 	int setCameraResolution(unsigned int height, unsigned int width);
 	std::vector<Resolution> resolution_search(void);
-	int stereoCameraSetup(void);
-	int captureChessboards(void);
 	int setupOpenCVSGBM(int, int);
 	int update_display(void);
 	int parse_cli(int argc, const char * argv[]);

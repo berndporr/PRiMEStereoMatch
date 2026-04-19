@@ -4,7 +4,10 @@
    Author: Charles Leech
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
-  ---------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------
+   Author: Bernd Porr
+   Email: bernd.porr@glasgow.ac.uk 
+  */
 #include "ComFunc.h"
 #include "StereoMatch.h"
 #include <chrono>
@@ -86,11 +89,8 @@ void HCI(StereoMatch *sm)
 #ifdef DISPLAY
 	imshow("InputOutput", sm->display_container);
 
-	if (sm->media_mode == DE_IMAGE)
-	{
-		cv::createTrackbar("Error Threshold", "InputOutput", &sm->error_threshold, 64, on_trackbar_err);
-		on_trackbar_err(sm->error_threshold, (void *)4);
-	}
+	cv::createTrackbar("Error Threshold", "InputOutput", &sm->error_threshold, 64, on_trackbar_err);
+	on_trackbar_err(sm->error_threshold, (void *)4);
 #endif
 
 	while (key != 'q')
@@ -131,11 +131,6 @@ void HCI(StereoMatch *sm)
 		}
 		case 'd':
 		{
-			if (sm->media_mode == DE_VIDEO)
-			{
-				printf("| d: Must be in image mode to use datasets.\n");
-				break;
-			}
 			if (sm->user_dataset)
 			{
 				printf("| d: User dataset has been specified.\n");

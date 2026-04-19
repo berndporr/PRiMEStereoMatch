@@ -5,6 +5,11 @@
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------*/
+
+/*
+ * Copyright (c) 2026 Bernd Porr, University of Glasgow
+ */
+
 #include "StereoMatch.h"
 
 // #############################################################################
@@ -28,8 +33,6 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_d
 
 	maxDis = 64;
 	de_mode = OCL_DE;
-	// de_mode = OCV_DE;
-	// num_threads = MIN_CPU_THREADS;
 	num_threads = MAX_CPU_THREADS;
 	gotOCLDev = gotOpenCLDev;
 	mask_mode = MASK_NONOCC;
@@ -39,56 +42,9 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_d
 	cvc_time_avg = 0;
 	frame_count = 0;
 
-	if (media_mode == DE_VIDEO)
-	{
-		// #####################################################################
-		// # Video/Camera Mode
-		// #####################################################################
-		cap = VideoCapture(0);
-		if (!cap.isOpened())
-		{
-			printf("Could not open the VideoCapture device.\n");
-			exit(1);
-		}
-		printf("Opened the VideoCapture device.\n");
-
-		if (setCameraResolution(cam_height, cam_width))
-		{
-			printf("Could not set the camera resolution.\n");
-			exit(1);
-		}
-
-		cap >> vFrame;
-		if (vFrame.empty())
-		{
-			printf("Could not load camera frame\n");
-			exit(1);
-		}
-
-		lFrame = vFrame(Rect(0, 0, vFrame.cols / 2, vFrame.rows));
-		rFrame = vFrame(Rect(vFrame.cols / 2, 0, vFrame.cols / 2, vFrame.rows));
-		if (lFrame.empty() || rFrame.empty())
-		{
-			printf("No data in left or right frames\n");
-			exit(1);
-		}
-
-		stereoCameraSetup();
-#ifdef DISPLAY
-		update_display();
-#endif // DISPLAY
-		SMDE = std::make_shared<DispEst>(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
-	}
-	else if (media_mode == DE_IMAGE)
-	{
-		// #####################################################################
-		// # Image Mode
-		// #####################################################################
-
-		std::cout << "Loading " << curr_dataset << " as the default dataset." << std::endl;
-		if (update_dataset(curr_dataset))
-			exit(1);
-	}
+	std::cout << "Loading " << curr_dataset << " as the default dataset." << std::endl;
+	if (update_dataset(curr_dataset))
+		exit(1);
 
 	// #########################################################################
 	// # SGBM Mode Setup
@@ -107,9 +63,6 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_d
 
 StereoMatch::~StereoMatch(void)
 {
-	printf("Shutting down StereoMatch Application\n");
-	if (media_mode == DE_VIDEO)
-		cap.release();
 	printf("Application Shut down\n");
 }
 
@@ -123,47 +76,7 @@ int StereoMatch::compute(float &de_time_ms)
 #endif // DEBUG_APP
 
 	float start_time = get_rt();
-	// #########################################################################
-	// # Frame Capture and Preprocessing (that we have to repeat)
-	// #########################################################################
-	if (media_mode == DE_VIDEO)
-	{
-		for (int drop = 0; drop < 3; drop++)
-			cap >> vFrame; // capture a frame from the camera
-		if (vFrame.empty())
-		{
-			printf("Could not load camera frame\n");
-			return -1;
-		}
-
-		lFrame = vFrame(Rect(0, 0, vFrame.cols / 2, vFrame.rows));				 // split the frame into left
-		rFrame = vFrame(Rect(vFrame.cols / 2, 0, vFrame.cols / 2, vFrame.rows)); // and right images
-
-		if (lFrame.empty() || rFrame.empty())
-		{
-			printf("No data in left or right frames\n");
-			return -1;
-		}
-
-		// Applies a generic geometrical transformation to an image.
-		// http://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html#remap
-		remap(lFrame, lFrame_rec, mapl[0], mapl[1], cv::INTER_LINEAR);
-		remap(rFrame, rFrame_rec, mapr[0], mapr[1], cv::INTER_LINEAR);
-
-		lFrame = lFrame_rec(cropBox);
-		rFrame = rFrame_rec(cropBox);
-
-		lFrame.copyTo(leftInputImg);
-		rFrame.copyTo(rightInputImg);
-	}
-	else if (media_mode == DE_IMAGE)
-	{
-		input_data_m.lock();
-	}
-	else
-	{
-		std::cout << "Unrecognised value for media_mode: " << media_mode << std::endl;
-	}
+	input_data_m.lock();
 
 	// #########################################################################
 	// # Start of Disparity Map Creation
@@ -254,7 +167,7 @@ int StereoMatch::compute(float &de_time_ms)
 	cv::imwrite("rightDisparityMap.png", rightDispMap);
 #endif
 
-	if (media_mode == DE_IMAGE && ground_truth_data)
+	if (ground_truth_data)
 	{
 		// Check pixel errors against ground truth depth map here.
 		// Can only be done with images as golden reference is required.
@@ -292,10 +205,7 @@ int StereoMatch::compute(float &de_time_ms)
 #endif // DEBUG_APP_MONITORS
 	}
 
-	if (media_mode == DE_IMAGE)
-	{
-		input_data_m.unlock();
-	}
+	input_data_m.unlock();
 
 #ifdef DISPLAY
 	imshow("InputOutput", display_container);
@@ -372,143 +282,6 @@ std::vector<Resolution> StereoMatch::resolution_search(void)
 	for (auto res : valid_res)
 		std::cout << "\t" << res.height << " x " << res.width << std::endl;
 	return valid_res;
-}
-
-// #############################################################################
-// # Calibration and Parameter loading for stereo camera setup
-// #############################################################################
-int StereoMatch::stereoCameraSetup(void)
-{
-	if (recalibrate)
-	{
-#ifndef DISPLAY
-		printf("Display window required for calibration. Please recompile with #define DISPLAY\n");
-		return -1;
-#endif // DISPLAY
-		update_display();
-		imshow("InputOutput", display_container);
-
-		// ###########################################################################################################
-		// # Camera Calibration - find intrinsic & extrinsic parameters from first principles (contains rectification)
-		// ###########################################################################################################
-		if (recaptureChessboards)
-		{
-			// Capture a series of calibration images from the camera.
-			printf("Capturing chessboard images for calibration.\n");
-			printf("A chessboard image with 9x6 inner corners should be placed in the view of the camera.\n");
-			captureChessboards();
-		}
-		printf("Running Calibration.\n");
-		calibrateCamera(9, 6, camProps, FILE_CALIB_XML);
-		printf("Calibration Complete.\n");
-	}
-	else
-	{
-		// #####################################################################
-		// # Camera Setup - load existing intrinsic & extrinsic parameters
-		// #####################################################################
-		string intrinsic_filename = FILE_INTRINSICS;
-		string extrinsic_filename = FILE_EXTRINSICS;
-
-		// Read in intrinsic parameters
-		printf("Loading intrinsic parameters.\n");
-		FileStorage fs(intrinsic_filename, FileStorage::READ);
-		if (!fs.isOpened())
-		{
-			printf("Failed to open file %s\n", intrinsic_filename.c_str());
-			return -1;
-		}
-		fs["M1"] >> camProps.cameraMatrix[0];
-		fs["D1"] >> camProps.distCoeffs[0];
-		fs["M2"] >> camProps.cameraMatrix[1];
-		fs["D2"] >> camProps.distCoeffs[1];
-
-		// Read in extrinsic parameters
-		printf("Loading extrinsic parameters.\n");
-		fs.open(extrinsic_filename, FileStorage::READ);
-		if (!fs.isOpened())
-		{
-			printf("Failed to open file %s\n", extrinsic_filename.c_str());
-			return -1;
-		}
-
-		fs["R"] >> camProps.R;
-
-		fs["T"] >> camProps.T;
-
-		printf("Performing Stereo Rectify.\n");
-		camProps.imgSize = lFrame.size();
-		// stereoRectify performed inside calibration function atm but not necessary in finding extrinsics that can be loaded
-		stereoRectify(camProps.cameraMatrix[0], camProps.distCoeffs[0], camProps.cameraMatrix[1], camProps.distCoeffs[1],
-					  camProps.imgSize, camProps.R, camProps.T, camProps.R1, camProps.R2, camProps.P1, camProps.P2, camProps.Q,
-					  CALIB_ZERO_DISPARITY, 1, camProps.imgSize, &camProps.roi[0], &camProps.roi[1]);
-	}
-
-	/// Computes the undistortion and rectification transformation map.
-	/// http://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html#initundistortrectifymap
-	// Left
-	initUndistortRectifyMap(camProps.cameraMatrix[0], camProps.distCoeffs[0], camProps.R1, camProps.P1, camProps.imgSize, CV_16SC2, mapl[0], mapl[1]);
-	// Right
-	initUndistortRectifyMap(camProps.cameraMatrix[1], camProps.distCoeffs[1], camProps.R2, camProps.P2, camProps.imgSize, CV_16SC2, mapr[0], mapr[1]);
-
-	/// Applies a generic geometrical transformation to an image.
-	/// http://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html#remap
-	remap(lFrame, lFrame_rec, mapl[0], mapl[1], INTER_LINEAR);
-	remap(rFrame, rFrame_rec, mapr[0], mapr[1], INTER_LINEAR);
-
-	// Use create ROI which is valid in both left and right ROIs
-	int tl_x = MAX(camProps.roi[0].x, camProps.roi[1].x);
-	int tl_y = MAX(camProps.roi[0].y, camProps.roi[1].y);
-	int br_x = MIN(camProps.roi[0].width + camProps.roi[0].x, camProps.roi[1].width + camProps.roi[1].x);
-	int br_y = MIN(camProps.roi[0].height + camProps.roi[0].y, camProps.roi[1].height + camProps.roi[1].y);
-	cropBox = Rect(Point(tl_x, tl_y), Point(br_x, br_y));
-
-	lFrame = lFrame_rec(cropBox);
-	rFrame = rFrame_rec(cropBox);
-
-	return 0;
-}
-
-// #############################################################################
-// # Chessboard image capture for camera calibration
-// #############################################################################
-int StereoMatch::captureChessboards(void)
-{
-	int img_num = 0;
-	char imageLoc[100];
-
-	while (img_num < 10)
-	{
-		cap >> vFrame;
-
-		if (vFrame.empty())
-		{
-			printf("Cannot capture data from video source\n");
-			img_num = 10;
-			return -1;
-		}
-
-		lFrame = vFrame(Rect(0, 0, vFrame.cols / 2, vFrame.rows));
-		rFrame = vFrame(Rect(vFrame.cols / 2, 0, vFrame.cols / 2, vFrame.rows));
-		lFrame.copyTo(leftInputImg);
-		rFrame.copyTo(rightInputImg);
-
-		if (cap_key == 'r')
-		{
-			sprintf(imageLoc, FILE_TEMPLATE_LEFT, img_num);
-			imwrite(imageLoc, lFrame);
-			lFrame.copyTo(leftDispMap);
-
-			sprintf(imageLoc, FILE_TEMPLATE_RIGHT, img_num++);
-			imwrite(imageLoc, rFrame);
-			rFrame.copyTo(rightDispMap);
-		}
-		imshow("InputOutput", display_container);
-		cap_key = waitKey(5);
-		if (cap_key == 'q')
-			exit(1);
-	}
-	return 0;
 }
 
 int StereoMatch::update_dataset(std::string dataset_name)
@@ -604,7 +377,7 @@ std:
 
 int StereoMatch::update_display(void)
 {
-	if ((media_mode == DE_IMAGE) && ground_truth_data)
+	if (ground_truth_data)
 	{
 		display_container = cv::Mat(lFrame.rows * 2, lFrame.cols * 3, CV_8UC3, cv::Scalar(0, 0, 0));
 		gtDispMap = cv::Mat(display_container, cv::Rect(lFrame.cols * 2, 0, lFrame.cols, lFrame.rows));			   // Top Far Right
@@ -655,100 +428,49 @@ int StereoMatch::setupOpenCVSGBM(int channels, int ndisparities)
 
 int StereoMatch::parse_cli(int argc, const char *argv[])
 {
-	args::ArgumentParser parser("Application: Stereo Matching for Depth Estimation.", "PRiME Project.\n");
-	args::HelpFlag help(parser, "help", "Displays this help menu", {'h', "help"});
-
-	// args::Group group_cmds(parser, "Commands (1 must be specified):", args::Group::Validators::Xor);
-
-	args::Command cmd_video(parser, "video", "Use video as the input source.", [&](args::Subparser &s_parser)
-							{
-		args::Flag arg_recalibrate(s_parser, "RECALIBRATE", "Recalibrate the camera to find ROIs.", {"RECALIBRATE"});
-		args::Flag arg_recapture(s_parser, "RECAPTURE", "Recapture chessboard image pairs for recalibration.", {"RECAPTURE"});
-
-		s_parser.Parse();
-
-        std::cout << "Input Source: Video" << std::endl;
-        std::cout << "Parsing command-specific arguments." << std::endl;
-
-		media_mode = DE_VIDEO;
-		recalibrate = false;
-		recaptureChessboards = false;
-		if(arg_recalibrate){
-			recalibrate = true;
-			if(arg_recapture){
-				recaptureChessboards = true;
-			}
-		} });
-
-	args::Command cmd_image(parser, "image", "Use images as the input source.", [&](args::Subparser &s_parser)
-							{
-		//TODO: Fix this to correctly perform group validation on filenames - errors currently handled during imread in StereoMatch constructor
-		args::Group filenames(s_parser, "Left and right filenames must be specified if using custom images.", args::Group::Validators::AllOrNone);
-		args::ValueFlag<std::string> arg_left(filenames, "left", "Left image filename.", {'l', "left"});
-		args::ValueFlag<std::string> arg_right(filenames, "right", "Right image filename.", {'r', "right"});
-		args::ValueFlag<std::string> arg_gt(filenames, "gt", "Ground truth image filename.", {'g', "gt"});
-
-		s_parser.Parse();
-
-        std::cout << "Input Source: Images" << std::endl;
-        std::cout << "Parsing command-specific arguments." << std::endl;
-
-		media_mode = DE_IMAGE;
-		if(arg_left)
+	if (argc == 1)
+	{
+		fprintf(stderr,"Usage: %s GIF|SGBM [[left.png right.png] disparity.png]\n",argv[0]);
+		return 1;
+	}
+	if (argc > 1)
+	{
+		std::string alg_mode = argv[1];
+		if (alg_mode == "GIF")
 		{
-			std::cout << "User Dataset filenames provided." << std::endl;
-			left_img_filename = args::get(arg_left);
-			right_img_filename = args::get(arg_right);
-			if(arg_gt)
-			{
-				gt_img_filename = args::get(arg_gt);
-				ground_truth_data = true;
-			}
-			curr_dataset = "User";
-			user_dataset = true;
+			MatchingAlgorithm = STEREO_GIF;
 		}
-		else{
-			curr_dataset = dataset_names[2];
-			ground_truth_data = true;
+		std::cout << "Matching Algorithm: STEREO_GIF" << std::endl;
+		if (alg_mode == "SGBM")
+		{
+			MatchingAlgorithm = STEREO_SGBM;
+			std::cout << "Matching Algorithm: STEREO_SGBM" << std::endl;
 		}
-        std::cout << "Image command arguments parsed." << std::endl; });
-
-	args::Options ReqGlobal = args::Options::Required | args::Options::Global;
-	args::ValueFlag<std::string> arg_alg_mode(parser, "mode", "The stereo matching algorithm to use. Valid options: {STEREO_SGBM, STEREO_GIF}.", {'a', "alg"}, ReqGlobal);
-
-	try
-	{
-		parser.ParseCLI(argc, argv);
 	}
-	catch (args::Help)
+	if (argc == 2)
 	{
-		std::cerr << parser;
-		return -1;
+		curr_dataset = dataset_names[2];
+		ground_truth_data = true;
+		std::cout << "Daset used: " << curr_dataset << std::endl;
+		return 0;
 	}
-	catch (args::ParseError e)
+	if (argc == 3)
 	{
-		std::cerr << e.what() << std::endl;
-		std::cerr << parser;
-		return -1;
+		std::cerr << "Can't just provide one image. We need a stereo pair." << std::endl;
+		return 1;
 	}
-	catch (args::ValidationError e)
+	if (argc > 3)
 	{
-		std::cerr << e.what() << std::endl;
-		std::cerr << parser;
-		return -1;
+		std::cout << "Stereo images provided." << std::endl;
+		left_img_filename = argv[2];
+		right_img_filename = argv[3];
+		curr_dataset = "User";
+		user_dataset = true;
 	}
-
-	std::cout << "Global arguments:" << std::endl;
-	if (args::get(arg_alg_mode) == "STEREO_GIF")
+	if (argc > 4)
 	{
-		MatchingAlgorithm = STEREO_GIF;
-		std::cout << "\t Matching Algorithm: STEREO_GIF" << std::endl;
+		gt_img_filename = argv[4];
+		ground_truth_data = true;
 	}
-	else
-	{
-		MatchingAlgorithm = STEREO_SGBM;
-		std::cout << "\t Matching Algorithm: STEREO_SGBM" << std::endl;
-	}
-
 	return 0;
 }
