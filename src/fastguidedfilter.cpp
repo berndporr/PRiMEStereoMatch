@@ -22,13 +22,13 @@ static cv::Mat convertTo(const cv::Mat &mat, int depth)
 class FastGuidedFilterImpl
 {
 public:
-    FastGuidedFilterImpl(int r, double eps,int s):r(r),eps(eps),s(s){}
+    FastGuidedFilterImpl(int r, double eps, int s) : r(r), eps(eps), s(s) {}
     virtual ~FastGuidedFilterImpl() {}
 
     cv::Mat filter(const cv::Mat &p, int depth);
 
 protected:
-    int Idepth,r,s;
+    int Idepth, r, s;
     double eps;
 
 private:
@@ -38,35 +38,33 @@ private:
 class FastGuidedFilterMono : public FastGuidedFilterImpl
 {
 public:
-    FastGuidedFilterMono(const cv::Mat &I, int r, double eps,int s);
+    FastGuidedFilterMono(const cv::Mat &I, int r, double eps, int s);
 
 private:
     virtual cv::Mat filterSingleChannel(const cv::Mat &p) const;
 
 private:
-
-    cv::Mat I,origI, mean_I, var_I;
+    cv::Mat I, origI, mean_I, var_I;
 };
 
 class FastGuidedFilterColor : public FastGuidedFilterImpl
 {
 public:
-    FastGuidedFilterColor(const cv::Mat &I, int r, double eps,int s);
+    FastGuidedFilterColor(const cv::Mat &I, int r, double eps, int s);
 
 private:
     virtual cv::Mat filterSingleChannel(const cv::Mat &p) const;
 
 private:
-    std::vector<cv::Mat> origIchannels,Ichannels;
+    std::vector<cv::Mat> origIchannels, Ichannels;
     cv::Mat mean_I_r, mean_I_g, mean_I_b;
     cv::Mat invrr, invrg, invrb, invgg, invgb, invbb;
 };
 
-
 cv::Mat FastGuidedFilterImpl::filter(const cv::Mat &p, int depth)
 {
     cv::Mat p2 = convertTo(p, Idepth);
-    cv::resize(p2 ,p2,cv::Size(p2.cols/s,p2.rows/s),0,0);
+    cv::resize(p2, p2, cv::Size(p2.cols / s, p2.rows / s), 0, 0);
     cv::Mat result;
     if (p.channels() == 1)
     {
@@ -86,14 +84,14 @@ cv::Mat FastGuidedFilterImpl::filter(const cv::Mat &p, int depth)
     return convertTo(result, depth == -1 ? p.depth() : depth);
 }
 
-FastGuidedFilterMono::FastGuidedFilterMono(const cv::Mat &origI, int r, double eps,int s):FastGuidedFilterImpl(r,eps,s)
+FastGuidedFilterMono::FastGuidedFilterMono(const cv::Mat &origI, int r, double eps, int s) : FastGuidedFilterImpl(r, eps, s)
 {
 
     if (origI.depth() == CV_32F || origI.depth() == CV_64F)
         this->origI = origI.clone();
     else
         this->origI = convertTo(origI, CV_32F);
-    cv::resize(this->origI ,I,cv::Size(this->origI.cols/s,this->origI.rows/s),0,0);
+    cv::resize(this->origI, I, cv::Size(this->origI.cols / s, this->origI.rows / s), 0, 0);
     Idepth = I.depth();
 
     mean_I = boxfilter(I, r);
@@ -113,12 +111,12 @@ cv::Mat FastGuidedFilterMono::filterSingleChannel(const cv::Mat &p) const
 
     cv::Mat mean_a = boxfilter(a, r);
     cv::Mat mean_b = boxfilter(b, r);
-    cv::resize(mean_a ,mean_a,cv::Size(origI.cols,origI.rows),0,0);
-    cv::resize(mean_b ,mean_b,cv::Size(origI.cols,origI.rows),0,0);
+    cv::resize(mean_a, mean_a, cv::Size(origI.cols, origI.rows), 0, 0);
+    cv::resize(mean_b, mean_b, cv::Size(origI.cols, origI.rows), 0, 0);
     return mean_a.mul(origI) + mean_b;
 }
 
-FastGuidedFilterColor::FastGuidedFilterColor(const cv::Mat &origI, int r, double eps, int s):FastGuidedFilterImpl(r,eps,s)// : r(r), eps(eps)
+FastGuidedFilterColor::FastGuidedFilterColor(const cv::Mat &origI, int r, double eps, int s) : FastGuidedFilterImpl(r, eps, s) // : r(r), eps(eps)
 {
 
     cv::Mat I;
@@ -129,7 +127,7 @@ FastGuidedFilterColor::FastGuidedFilterColor(const cv::Mat &origI, int r, double
     Idepth = I.depth();
 
     cv::split(I, origIchannels);
-    cv::resize(I,I,cv::Size(I.cols/s,I.rows/s),0,0);
+    cv::resize(I, I, cv::Size(I.cols / s, I.rows / s), 0, 0);
     cv::split(I, Ichannels);
 
     mean_I_r = boxfilter(Ichannels[0], r);
@@ -189,23 +187,21 @@ cv::Mat FastGuidedFilterColor::filterSingleChannel(const cv::Mat &p) const
     cv::Mat mean_a_g = boxfilter(a_g, r);
     cv::Mat mean_a_b = boxfilter(a_b, r);
     cv::Mat mean_b = boxfilter(b, r);
-    cv::resize(mean_a_r ,mean_a_r,cv::Size(origIchannels[0].cols,origIchannels[0].rows),0,0);
-    cv::resize(mean_a_g ,mean_a_g,cv::Size(origIchannels[1].cols,origIchannels[1].rows),0,0);
-    cv::resize(mean_a_b ,mean_a_b,cv::Size(origIchannels[2].cols,origIchannels[2].rows),0,0);
-    cv::resize(mean_b,mean_b,cv::Size(origIchannels[2].cols,origIchannels[2].rows),0,0);
-    return (mean_a_r.mul(origIchannels[0]) +mean_a_g.mul(origIchannels[1]) +mean_a_b.mul(origIchannels[2]) + mean_b);
-
+    cv::resize(mean_a_r, mean_a_r, cv::Size(origIchannels[0].cols, origIchannels[0].rows), 0, 0);
+    cv::resize(mean_a_g, mean_a_g, cv::Size(origIchannels[1].cols, origIchannels[1].rows), 0, 0);
+    cv::resize(mean_a_b, mean_a_b, cv::Size(origIchannels[2].cols, origIchannels[2].rows), 0, 0);
+    cv::resize(mean_b, mean_b, cv::Size(origIchannels[2].cols, origIchannels[2].rows), 0, 0);
+    return (mean_a_r.mul(origIchannels[0]) + mean_a_g.mul(origIchannels[1]) + mean_a_b.mul(origIchannels[2]) + mean_b);
 }
 
-
-FastGuidedFilter::FastGuidedFilter(const cv::Mat &I, int r, double eps,int s)
+FastGuidedFilter::FastGuidedFilter(const cv::Mat &I, int r, double eps, int s)
 {
     CV_Assert(I.channels() == 1 || I.channels() == 3);
 
     if (I.channels() == 1)
-        impl_ = new FastGuidedFilterMono(I, 2 * (r/s) + 1, eps,s);
+        impl_ = new FastGuidedFilterMono(I, 2 * (r / s) + 1, eps, s);
     else
-        impl_ = new FastGuidedFilterColor(I, 2 * (r/s) + 1, eps,s);
+        impl_ = new FastGuidedFilterColor(I, 2 * (r / s) + 1, eps, s);
 }
 
 FastGuidedFilter::~FastGuidedFilter()
@@ -218,7 +214,7 @@ cv::Mat FastGuidedFilter::filter(const cv::Mat &p, int depth) const
     return impl_->filter(p, depth);
 }
 
-cv::Mat fastGuidedFilter(const cv::Mat &I, const cv::Mat &p, int r, double eps, int s,int depth)
+cv::Mat fastGuidedFilter(const cv::Mat &I, const cv::Mat &p, int r, double eps, int s, int depth)
 {
-    return FastGuidedFilter(I, r, eps,s).filter(p, depth);
+    return FastGuidedFilter(I, r, eps, s).filter(p, depth);
 }

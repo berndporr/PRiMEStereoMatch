@@ -17,92 +17,96 @@ DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool)
     hei = lImg.rows;
     wid = lImg.cols;
 
-    //Global Image Type Checking
-	if(lImg.type() == rImg.type())
-	{
+    // Global Image Type Checking
+    if (lImg.type() == rImg.type())
+    {
 #ifdef DEBUG_APP
-		printf("Data type = %d, CV_32F = %d, CV_8U = %d\n", (lImg.type() & CV_MAT_DEPTH_MASK), CV_32F, CV_8U);
+        printf("Data type = %d, CV_32F = %d, CV_8U = %d\n", (lImg.type() & CV_MAT_DEPTH_MASK), CV_32F, CV_8U);
 #endif // DEBUG_APP
-	} else {
-		printf("DE: Error - Left & Right images are of different types.\n");
-		exit(1);
-	}
+    }
+    else
+    {
+        printf("DE: Error - Left & Right images are of different types.\n");
+        exit(1);
+    }
 
     lcostVol = new cv::Mat[maxDis];
     rcostVol = new cv::Mat[maxDis];
     for (int i = 0; i < maxDis; ++i)
     {
-		lcostVol[i] = cv::Mat::zeros(hei, wid, CV_32FC1);
-		rcostVol[i] = cv::Mat::zeros(hei, wid, CV_32FC1);
+        lcostVol[i] = cv::Mat::zeros(hei, wid, CV_32FC1);
+        rcostVol[i] = cv::Mat::zeros(hei, wid, CV_32FC1);
     }
 
-	lDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
-	rDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
-	lValid = cv::Mat::zeros(hei, wid, CV_8UC1);
-	rValid = cv::Mat::zeros(hei, wid, CV_8UC1);
+    lDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
+    rDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
+    lValid = cv::Mat::zeros(hei, wid, CV_8UC1);
+    rValid = cv::Mat::zeros(hei, wid, CV_8UC1);
 
-	printf("Setting up pthreads function constructors\n");
+    printf("Setting up pthreads function constructors\n");
     printf("Construction Complete\n");
 }
 
 DispEst::~DispEst(void)
 {
-    delete [] lcostVol;
-    delete [] rcostVol;
+    delete[] lcostVol;
+    delete[] rcostVol;
 }
 
 int DispEst::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
 {
-	assert(leftImg.type() == rightImg.type());
-	lImg = leftImg;
-	rImg = rightImg;
-	return 0;
+    assert(leftImg.type() == rightImg.type());
+    lImg = leftImg;
+    rImg = rightImg;
+    return 0;
 }
 
 int DispEst::setThreads(unsigned int newThreads)
 {
-	if(newThreads > MAX_CPU_THREADS)
-		return -1;
+    if (newThreads > MAX_CPU_THREADS)
+        return -1;
 
-	threads = newThreads;
-	return 0;
+    threads = newThreads;
+    return 0;
 }
 
 int DispEst::printCV(void)
 {
-	char filename[256];
-	int ret_val = 0;
+    char filename[256];
+    int ret_val = 0;
 
-	for (int i = 0; i < maxDis; ++i)
-	{
-		if(ret_val = sprintf(filename, "CV/lCV%d.png", i)) return ret_val;
-		imwrite(filename, lcostVol[i]*1024*8);
-		if(ret_val = sprintf(filename, "CV/rCV%d.png", i)) return ret_val;
-		imwrite(filename, rcostVol[i]*1024*8);
-	}
-	return 0;
+    for (int i = 0; i < maxDis; ++i)
+    {
+        if (ret_val = sprintf(filename, "CV/lCV%d.png", i))
+            return ret_val;
+        imwrite(filename, lcostVol[i] * 1024 * 8);
+        if (ret_val = sprintf(filename, "CV/rCV%d.png", i))
+            return ret_val;
+        imwrite(filename, rcostVol[i] * 1024 * 8);
+    }
+    return 0;
 }
 
-//#############################################################################################################
-//# Cost Volume Construction
-//#############################################################################################################
+// #############################################################################################################
+// # Cost Volume Construction
+// #############################################################################################################
 int DispEst::CostConst()
 {
-	int ret_val = 0;
+    int ret_val = 0;
 
-	if(ret_val = constructor.preprocess(lImg, lGrdX))
-		return ret_val;
-	if(ret_val = constructor.preprocess(rImg, rGrdX))
-		return ret_val;
+    if (ret_val = constructor.preprocess(lImg, lGrdX))
+        return ret_val;
+    if (ret_val = constructor.preprocess(rImg, rGrdX))
+        return ret_val;
 
-    // Build Cost Volume
-	#pragma omp parallel for
-    for( int d = 0; d < maxDis; ++d)
+// Build Cost Volume
+#pragma omp parallel for
+    for (int d = 0; d < maxDis; ++d)
     {
         constructor.buildCV_left(lImg, rImg, lGrdX, rGrdX, d, lcostVol[d]);
     }
-	#pragma omp parallel for
-    for( int d = 0; d < maxDis; ++d)
+#pragma omp parallel for
+    for (int d = 0; d < maxDis; ++d)
     {
         constructor.buildCV_right(rImg, lImg, rGrdX, lGrdX, d, rcostVol[d]);
     }
@@ -111,7 +115,7 @@ int DispEst::CostConst()
 
 int DispEst::CostConst_CPU()
 {
-    //Set up threads and thread attributes
+    // Set up threads and thread attributes
     void *status;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -119,82 +123,84 @@ int DispEst::CostConst_CPU()
     pthread_t BCV_threads[maxDis];
     buildCV_TD buildCV_TD_Array[maxDis];
 
-	constructor.preprocess(lImg, lGrdX);
-	constructor.preprocess(rImg, rGrdX);
+    constructor.preprocess(lImg, lGrdX);
+    constructor.preprocess(rImg, rGrdX);
 
-    for(int level = 0; level <= maxDis/threads; ++level)
-	{
-	    //Handle remainder if threads is not power of 2.
-	    int block_size = (level < maxDis/threads) ? threads : (maxDis%threads);
+    for (int level = 0; level <= maxDis / threads; ++level)
+    {
+        // Handle remainder if threads is not power of 2.
+        int block_size = (level < maxDis / threads) ? threads : (maxDis % threads);
 
-	    for(int iter=0; iter < block_size; ++iter)
-	    {
-	        int d = level*threads + iter;
+        for (int iter = 0; iter < block_size; ++iter)
+        {
+            int d = level * threads + iter;
             buildCV_TD_Array[d] = {&lImg, &rImg, &lGrdX, &rGrdX, d, &lcostVol[d]};
             pthread_create(&BCV_threads[d], &attr, CVC::buildCV_left_thread, (void *)&buildCV_TD_Array[d]);
-	    }
-        for(int iter=0; iter < block_size; ++iter)
-	    {
-	        int d = level*threads + iter;
+        }
+        for (int iter = 0; iter < block_size; ++iter)
+        {
+            int d = level * threads + iter;
             pthread_join(BCV_threads[d], &status);
         }
-	}
-	for(int level = 0; level <= maxDis/threads; ++level)
-	{
-        //Handle remainder if threads is not power of 2.
-	    int block_size = (level < maxDis/threads) ? threads : (maxDis%threads);
+    }
+    for (int level = 0; level <= maxDis / threads; ++level)
+    {
+        // Handle remainder if threads is not power of 2.
+        int block_size = (level < maxDis / threads) ? threads : (maxDis % threads);
 
-	    for(int iter=0; iter < block_size; ++iter)
-	    {
-	        int d = level*threads + iter;
+        for (int iter = 0; iter < block_size; ++iter)
+        {
+            int d = level * threads + iter;
             buildCV_TD_Array[d] = {&rImg, &lImg, &rGrdX, &lGrdX, d, &rcostVol[d]};
             pthread_create(&BCV_threads[d], &attr, CVC::buildCV_right_thread, (void *)&buildCV_TD_Array[d]);
-	    }
-        for(int iter=0; iter < block_size; ++iter)
-	    {
-	        int d = level*threads + iter;
+        }
+        for (int iter = 0; iter < block_size; ++iter)
+        {
+            int d = level * threads + iter;
             pthread_join(BCV_threads[d], &status);
         }
-	}
-	return 0;
+    }
+    return 0;
 }
 
-//#############################################################################################################
-//# Cost Volume Filtering
-//#############################################################################################################
+// #############################################################################################################
+// # Cost Volume Filtering
+// #############################################################################################################
 int DispEst::CostFilter_FGF()
 {
     FastGuidedFilter fgf_left(lImg, GIF_R_WIN, GIF_EPS, subsample_rate);
     FastGuidedFilter fgf_right(rImg, GIF_R_WIN, GIF_EPS, subsample_rate);
 
-	#pragma omp parallel for
-    for(int d = 0; d < maxDis; ++d){
+#pragma omp parallel for
+    for (int d = 0; d < maxDis; ++d)
+    {
         lcostVol[d] = fgf_left.filter(lcostVol[d]);
     }
 
-	#pragma omp parallel for
-    for(int d = 0; d < maxDis; ++d){
+#pragma omp parallel for
+    for (int d = 0; d < maxDis; ++d)
+    {
         rcostVol[d] = fgf_right.filter(rcostVol[d]);
     }
-	return 0;
+    return 0;
 }
 
 int DispEst::DispSelect_CPU()
 {
-    //printf("Left Selection...\n");
+    // printf("Left Selection...\n");
     selector.CVSelect(lcostVol, maxDis, lDisMap);
-    //selector->CVSelect_thread(lcostVol, maxDis, lDisMap, threads);
+    // selector->CVSelect_thread(lcostVol, maxDis, lDisMap, threads);
 
-    //printf("Right Selection...\n");
+    // printf("Right Selection...\n");
     selector.CVSelect(rcostVol, maxDis, rDisMap);
-    //selector->CVSelect_thread(rcostVol, maxDis, rDisMap, threads);
-	return 0;
+    // selector->CVSelect_thread(rcostVol, maxDis, rDisMap, threads);
+    return 0;
 }
 
 int DispEst::PostProcess_CPU()
 {
-    //printf("Post Processing Underway...\n");
+    // printf("Post Processing Underway...\n");
     postProcessor.processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);
-    //printf("Post Processing Complete\n");
-	return 0;
+    // printf("Post Processing Complete\n");
+    return 0;
 }

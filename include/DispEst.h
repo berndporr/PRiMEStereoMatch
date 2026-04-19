@@ -20,30 +20,27 @@ public:
     DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool ocl);
     ~DispEst(void);
 
-    //DispSel
+    // DispSel
     cv::Mat lDisMap;
     cv::Mat rDisMap;
 
-    //Public Methods
-	int setInputImages(cv::Mat l, cv::Mat r);
-	int setThreads(unsigned int newThreads);
-	void setSubsampleRate(unsigned int newRate) {subsample_rate = newRate;};
-	int printCV(void);
+    // Public Methods
+    int setInputImages(cv::Mat l, cv::Mat r);
+    int setThreads(unsigned int newThreads);
+    void setSubsampleRate(unsigned int newRate) { subsample_rate = newRate; };
+    int printCV(void);
 
     int CostConst();
     int CostConst_CPU();
 
-    int CostFilter();
-    int CostFilter_CPU();
     int CostFilter_FGF();
-
 
     int DispSelect_CPU();
 
     int PostProcess_CPU();
 
 private:
-    //Private Variable
+    // Private Variable
     cv::Mat lImg;
     cv::Mat rImg;
 
@@ -53,11 +50,11 @@ private:
     int threads;
     unsigned int subsample_rate = 4;
 
-	//CVC
+    // CVC
     cv::Mat lGrdX;
     cv::Mat rGrdX;
-    cv::Mat* lcostVol = nullptr;
-    cv::Mat* rcostVol = nullptr;
+    cv::Mat *lcostVol = nullptr;
+    cv::Mat *rcostVol = nullptr;
     cv::Mat lValid;
     cv::Mat rValid;
 
@@ -66,6 +63,6 @@ private:
     DispSel selector;
     PP postProcessor;
 
-    //Private Methods
-    //None
+    // Private Methods
+    // None
 };
