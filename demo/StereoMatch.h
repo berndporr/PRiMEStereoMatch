@@ -8,15 +8,13 @@
 #ifndef STEREOMATCH_H
 #define STEREOMATCH_H
 
-#include "ComFunc.h"
-#include "DispEst.h"
+#include "Prime_stereo_match.h"
 
 #define NO_MASKS 0
 #define MASK_NONE 1
 #define MASK_NONOCC 2
 #define MASK_DISC 3
 
-#define DISPLAY
 //#define DEBUG_APP
 #define DEBUG_APP_MONITORS
 
@@ -83,7 +81,6 @@ private:
     //Frame Holders & Camera object
 	cv::Mat lFrame, rFrame, vFrame;
 
-	VideoCapture cap;
 	//Image rectification maps
 	cv::Mat mapl[2], mapr[2];
 	cv::Rect cropBox;
@@ -96,12 +93,9 @@ private:
 	cv::Mat imgDisparity16S;
 
 	//StereoGIF Variables
-	std::shared_ptr<DispEst> SMDE;
+	std::shared_ptr<PrimeStereoMatch> SMDE;
 	int num_threads;
 
-	//Function prototypes
-	int setCameraResolution(unsigned int height, unsigned int width);
-	std::vector<Resolution> resolution_search(void);
 	int update_display(void);
 	int parse_cli(int argc, const char * argv[]);
 };

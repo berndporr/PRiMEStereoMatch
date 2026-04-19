@@ -74,9 +74,7 @@ int StereoMatch::compute(float &de_time_ms)
 	// #########################################################################
 	// # Start of Disparity Map Creation
 	// #########################################################################
-#ifdef DEBUG_APP
-	printf("MatchingAlgorithm == STEREO_GIF\n");
-#endif // DEBUG_APP
+
 	if ((lFrame.type() & CV_MAT_DEPTH_MASK) != CV_32F)
 	{
 		lFrame.convertTo(lFrame, CV_32F, 1 / 255.0f);
@@ -85,30 +83,11 @@ int StereoMatch::compute(float &de_time_ms)
 	SMDE->setInputImages(lFrame, rFrame);
 	SMDE->setThreads(num_threads);
 	SMDE->setSubsampleRate(subsample_rate);
+	SMDE->process();
 
-	// ******** Disparity Estimation Code ******** //
-#ifdef DEBUG_APP
-	std::cout << "Disparity Estimation Started..." << std::endl;
-#endif // DEBUG_APP
-
-	cvc_time = get_rt();
-	SMDE->CostConst();
-	cvc_time = get_rt() - cvc_time;
-
-	cvf_time = get_rt();
-	SMDE->CostFilter_FGF();
-	cvf_time = get_rt() - cvf_time;
-
-	dispsel_time = get_rt();
-	SMDE->DispSelect_CPU();
-	dispsel_time = get_rt() - dispsel_time;
-
-	pp_time = get_rt();
-	SMDE->PostProcess_CPU();
-	pp_time = get_rt() - pp_time;
-#ifdef DEBUG_APP
-	std::cout << "Disparity Estimation Complete." << std::endl;
-#endif // DEBUG_APP
+	// #########################################################################
+	// # End of Disparity Map Creation
+	// #########################################################################
 
 	// ******** Display Disparity Maps  ******** //
 	SMDE->lDisMap.convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
@@ -118,14 +97,6 @@ int StereoMatch::compute(float &de_time_ms)
 	cv::cvtColor(lDispMap, rightDispMap, cv::COLOR_GRAY2RGB);
 	// ******** Display Disparity Maps  ******** //
 
-#ifdef DEBUG_APP_MONITORS
-	cvc_time_avg = (cvc_time_avg * frame_count + cvc_time) / (frame_count + 1);
-	printf("STEREO GIF Module Times:\n");
-	printf("CVC Time:\t %4.2f ms   Avg Time:\t %4.2f\n", cvc_time / 1000, cvc_time_avg / 1000);
-	printf("CVF Time:\t %4.2f ms\n", cvf_time / 1000);
-	printf("DispSel Time:\t %4.2f ms\n", dispsel_time / 1000);
-	printf("PP Time:\t %4.2f ms\n", pp_time / 1000);
-#endif // DEBUG_APP_MONITORS
 	frame_count++;
 #ifdef DEBUG_APP_MONITORS
 	de_time_ms = (get_rt() - start_time) / 1000;
@@ -168,9 +139,7 @@ int StereoMatch::compute(float &de_time_ms)
 
 	input_data_m.unlock();
 
-#ifdef DISPLAY
 	imshow("InputOutput", display_container);
-#endif
 	return 0;
 }
 
@@ -253,11 +222,8 @@ std:
 
 	imgDisparity16S = cv::Mat(lFrame.rows, lFrame.cols, CV_16S);
 	blankDispMap = cv::Mat(rFrame.rows, rFrame.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-#ifdef DISPLAY
 	update_display();
-#endif // DISPLAY
-	SMDE = std::make_shared<DispEst>(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
-
+	SMDE = std::make_shared<PrimeStereoMatch>(lFrame.rows, lFrame.cols, maxDis, num_threads);
 	error_threshold = (error_threshold / scale_factor) * scale_factor_next;
 	scale_factor = scale_factor_next;
 

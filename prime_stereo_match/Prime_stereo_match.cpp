@@ -5,31 +5,11 @@
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------*/
-#include "DispEst.h"
+#include "Prime_stereo_match.h"
 
-DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool)
-    : lImg(l), rImg(r), maxDis(d), threads(t)
+PrimeStereoMatch::PrimeStereoMatch(int height, int width, const int maxDisparity, int numThreads)
+    : hei(height), wid(width), maxDis(maxDisparity), threads(numThreads)
 {
-#ifdef DEBUG_APP
-    std::cout << "Disparity Estimation for Depth Analysis in Stereo Vision Applications." << std::endl;
-#endif // DEBUG_APP
-
-    hei = lImg.rows;
-    wid = lImg.cols;
-
-    // Global Image Type Checking
-    if (lImg.type() == rImg.type())
-    {
-#ifdef DEBUG_APP
-        printf("Data type = %d, CV_32F = %d, CV_8U = %d\n", (lImg.type() & CV_MAT_DEPTH_MASK), CV_32F, CV_8U);
-#endif // DEBUG_APP
-    }
-    else
-    {
-        printf("DE: Error - Left & Right images are of different types.\n");
-        exit(1);
-    }
-
     lcostVol = new cv::Mat[maxDis];
     rcostVol = new cv::Mat[maxDis];
     for (int i = 0; i < maxDis; ++i)
@@ -42,18 +22,15 @@ DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool)
     rDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
     lValid = cv::Mat::zeros(hei, wid, CV_8UC1);
     rValid = cv::Mat::zeros(hei, wid, CV_8UC1);
-
-    printf("Setting up pthreads function constructors\n");
-    printf("Construction Complete\n");
 }
 
-DispEst::~DispEst(void)
+PrimeStereoMatch::~PrimeStereoMatch(void)
 {
     delete[] lcostVol;
     delete[] rcostVol;
 }
 
-int DispEst::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
+int PrimeStereoMatch::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
 {
     assert(leftImg.type() == rightImg.type());
     lImg = leftImg;
@@ -61,7 +38,7 @@ int DispEst::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
     return 0;
 }
 
-int DispEst::setThreads(unsigned int newThreads)
+int PrimeStereoMatch::setThreads(unsigned int newThreads)
 {
     if (newThreads > MAX_CPU_THREADS)
         return -1;
@@ -70,27 +47,10 @@ int DispEst::setThreads(unsigned int newThreads)
     return 0;
 }
 
-int DispEst::printCV(void)
-{
-    char filename[256];
-    int ret_val = 0;
-
-    for (int i = 0; i < maxDis; ++i)
-    {
-        if (ret_val = sprintf(filename, "CV/lCV%d.png", i))
-            return ret_val;
-        imwrite(filename, lcostVol[i] * 1024 * 8);
-        if (ret_val = sprintf(filename, "CV/rCV%d.png", i))
-            return ret_val;
-        imwrite(filename, rcostVol[i] * 1024 * 8);
-    }
-    return 0;
-}
-
 // #############################################################################################################
 // # Cost Volume Construction
 // #############################################################################################################
-int DispEst::CostConst()
+int PrimeStereoMatch::CostConst()
 {
     int ret_val = 0;
 
@@ -113,7 +73,7 @@ int DispEst::CostConst()
     return 0;
 }
 
-int DispEst::CostConst_CPU()
+int PrimeStereoMatch::CostConst_CPU()
 {
     // Set up threads and thread attributes
     void *status;
@@ -166,7 +126,7 @@ int DispEst::CostConst_CPU()
 // #############################################################################################################
 // # Cost Volume Filtering
 // #############################################################################################################
-int DispEst::CostFilter_FGF()
+int PrimeStereoMatch::CostFilter_FGF()
 {
     FastGuidedFilter fgf_left(lImg, GIF_R_WIN, GIF_EPS, subsample_rate);
     FastGuidedFilter fgf_right(rImg, GIF_R_WIN, GIF_EPS, subsample_rate);
@@ -185,7 +145,7 @@ int DispEst::CostFilter_FGF()
     return 0;
 }
 
-int DispEst::DispSelect_CPU()
+int PrimeStereoMatch::DispSelect_CPU()
 {
     // printf("Left Selection...\n");
     selector.CVSelect(lcostVol, maxDis, lDisMap);
@@ -197,10 +157,17 @@ int DispEst::DispSelect_CPU()
     return 0;
 }
 
-int DispEst::PostProcess_CPU()
+int PrimeStereoMatch::PostProcess_CPU()
 {
     // printf("Post Processing Underway...\n");
     postProcessor.processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);
     // printf("Post Processing Complete\n");
     return 0;
+}
+
+void PrimeStereoMatch::process() {
+	CostConst();
+	CostFilter_FGF();
+	DispSelect_CPU();
+	PostProcess_CPU();
 }
