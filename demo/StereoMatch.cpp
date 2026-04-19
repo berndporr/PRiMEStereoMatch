@@ -274,14 +274,14 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 	if (argc > 2)
 	{
 		std::cout << "Stereo images provided." << std::endl;
-		left_img_filename = argv[2];
-		right_img_filename = argv[3];
+		left_img_filename = argv[1];
+		right_img_filename = argv[2];
 		curr_dataset = "User";
 		user_dataset = true;
 	}
 	if (argc > 3)
 	{
-		gt_img_filename = argv[4];
+		gt_img_filename = argv[3];
 		ground_truth_data = true;
 	}
 	return 0;
