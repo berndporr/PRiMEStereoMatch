@@ -182,7 +182,7 @@ void HCI(StereoMatch *sm)
 				break;
 			}
         }
-        key = waitKey(1);
+        key = waitKey(0);
     }
     return;
 }

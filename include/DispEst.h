@@ -56,26 +56,15 @@ private:
 	//CVC
     cv::Mat lGrdX;
     cv::Mat rGrdX;
-	//CVC & CVF
-//    Mat lcostVol_cvc;
-//    Mat rcostVol_cvc;
-    cv::Mat* lcostVol;
-    cv::Mat* rcostVol;
-    //CVF
-//    Mat* lImg_rgb;
-//    Mat* rImg_rgb;
-//    Mat* mean_lImg;
-//    Mat* mean_rImg;
-//    Mat* var_lImg;
-//    Mat* var_rImg;
-    //PP
+    cv::Mat* lcostVol = nullptr;
+    cv::Mat* rcostVol = nullptr;
     cv::Mat lValid;
     cv::Mat rValid;
 
-    CVC* constructor;
-    CVF* filter;
-    DispSel* selector;
-    PP* postProcessor;
+    CVC constructor;
+    CVF filter;
+    DispSel selector;
+    PP postProcessor;
 
     //Private Methods
     //None

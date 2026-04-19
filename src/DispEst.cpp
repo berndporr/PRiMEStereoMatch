@@ -36,24 +36,12 @@ DispEst::DispEst(cv::Mat l, cv::Mat r, const int d, int t, bool)
 		rcostVol[i] = cv::Mat::zeros(hei, wid, CV_32FC1);
     }
 
-//    lImg_rgb = new Mat[3];
-//    rImg_rgb = new Mat[3];
-//    mean_lImg = new Mat[3];
-//    mean_rImg = new Mat[3];
-//    var_lImg = new Mat[6];
-//    var_rImg = new Mat[6];
-
 	lDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
 	rDisMap = cv::Mat::zeros(hei, wid, CV_8UC1);
 	lValid = cv::Mat::zeros(hei, wid, CV_8UC1);
 	rValid = cv::Mat::zeros(hei, wid, CV_8UC1);
 
 	printf("Setting up pthreads function constructors\n");
-    constructor = new CVC();
-    filter = new CVF();
-    selector = new DispSel();
-    postProcessor = new PP();
-
     printf("Construction Complete\n");
 }
 
@@ -61,10 +49,6 @@ DispEst::~DispEst(void)
 {
     delete [] lcostVol;
     delete [] rcostVol;
-    delete constructor;
-    delete filter;
-    delete selector;
-    delete postProcessor;
 }
 
 int DispEst::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
@@ -106,21 +90,21 @@ int DispEst::CostConst()
 {
 	int ret_val = 0;
 
-	if(ret_val = constructor->preprocess(lImg, lGrdX))
+	if(ret_val = constructor.preprocess(lImg, lGrdX))
 		return ret_val;
-	if(ret_val = constructor->preprocess(rImg, rGrdX))
+	if(ret_val = constructor.preprocess(rImg, rGrdX))
 		return ret_val;
 
     // Build Cost Volume
 	#pragma omp parallel for
     for( int d = 0; d < maxDis; ++d)
     {
-        constructor->buildCV_left(lImg, rImg, lGrdX, rGrdX, d, lcostVol[d]);
+        constructor.buildCV_left(lImg, rImg, lGrdX, rGrdX, d, lcostVol[d]);
     }
 	#pragma omp parallel for
     for( int d = 0; d < maxDis; ++d)
     {
-        constructor->buildCV_right(rImg, lImg, rGrdX, lGrdX, d, rcostVol[d]);
+        constructor.buildCV_right(rImg, lImg, rGrdX, lGrdX, d, rcostVol[d]);
     }
     return 0;
 }
@@ -135,8 +119,8 @@ int DispEst::CostConst_CPU()
     pthread_t BCV_threads[maxDis];
     buildCV_TD buildCV_TD_Array[maxDis];
 
-	constructor->preprocess(lImg, lGrdX);
-	constructor->preprocess(rImg, rGrdX);
+	constructor.preprocess(lImg, lGrdX);
+	constructor.preprocess(rImg, rGrdX);
 
     for(int level = 0; level <= maxDis/threads; ++level)
 	{
@@ -198,11 +182,11 @@ int DispEst::CostFilter_FGF()
 int DispEst::DispSelect_CPU()
 {
     //printf("Left Selection...\n");
-    selector->CVSelect(lcostVol, maxDis, lDisMap);
+    selector.CVSelect(lcostVol, maxDis, lDisMap);
     //selector->CVSelect_thread(lcostVol, maxDis, lDisMap, threads);
 
     //printf("Right Selection...\n");
-    selector->CVSelect(rcostVol, maxDis, rDisMap);
+    selector.CVSelect(rcostVol, maxDis, rDisMap);
     //selector->CVSelect_thread(rcostVol, maxDis, rDisMap, threads);
 	return 0;
 }
@@ -210,7 +194,7 @@ int DispEst::DispSelect_CPU()
 int DispEst::PostProcess_CPU()
 {
     //printf("Post Processing Underway...\n");
-    postProcessor->processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);
+    postProcessor.processDM(lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis, threads);
     //printf("Post Processing Complete\n");
 	return 0;
 }
