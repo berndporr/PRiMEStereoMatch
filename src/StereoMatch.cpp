@@ -47,13 +47,6 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) : end_d
 		exit(1);
 
 	// #########################################################################
-	// # SGBM Mode Setup
-	// #########################################################################
-	setupOpenCVSGBM(lFrame.channels(), maxDis);
-	imgDisparity16S = cv::Mat(lFrame.rows, lFrame.cols, CV_16S);
-	blankDispMap = cv::Mat(rFrame.rows, rFrame.cols, CV_8UC3);
-
-	// #########################################################################
 	// # End of Preprocessing (that we don't want to repeat)
 	// #########################################################################
 	printf("End of Preprocessing\n");
@@ -81,82 +74,59 @@ int StereoMatch::compute(float &de_time_ms)
 	// #########################################################################
 	// # Start of Disparity Map Creation
 	// #########################################################################
-	if (MatchingAlgorithm == STEREO_SGBM)
-	{
 #ifdef DEBUG_APP
-		printf("MatchingAlgorithm == STEREO_SGBM\n");
+	printf("MatchingAlgorithm == STEREO_GIF\n");
 #endif // DEBUG_APP
-		if ((lFrame.type() & CV_MAT_DEPTH_MASK) != CV_8U)
-		{
-			lFrame.convertTo(lFrame, CV_8U, 255);
-			rFrame.convertTo(rFrame, CV_8U, 255);
-		}
-
-		// Compute the disparity map
-		ssgbm->compute(lFrame, rFrame, imgDisparity16S);
-		minMaxLoc(imgDisparity16S, &minVal, &maxVal); // Check its extreme values
-
-		// Load the disparity map to the display
-		imgDisparity16S.convertTo(lDispMap, CV_8U, 255 / (maxVal - minVal));
-		lDispMap = (lDispMap / 4) * scale_factor;
-		cvtColor(lDispMap, leftDispMap, cv::COLOR_GRAY2RGB);
+	if ((lFrame.type() & CV_MAT_DEPTH_MASK) != CV_32F)
+	{
+		lFrame.convertTo(lFrame, CV_32F, 1 / 255.0f);
+		rFrame.convertTo(rFrame, CV_32F, 1 / 255.0f);
 	}
-	else if (MatchingAlgorithm == STEREO_GIF)
-	{
-#ifdef DEBUG_APP
-		printf("MatchingAlgorithm == STEREO_GIF\n");
-#endif // DEBUG_APP
-		if ((lFrame.type() & CV_MAT_DEPTH_MASK) != CV_32F)
-		{
-			lFrame.convertTo(lFrame, CV_32F, 1 / 255.0f);
-			rFrame.convertTo(rFrame, CV_32F, 1 / 255.0f);
-		}
-		SMDE->setInputImages(lFrame, rFrame);
-		SMDE->setThreads(num_threads);
-		SMDE->setSubsampleRate(subsample_rate);
+	SMDE->setInputImages(lFrame, rFrame);
+	SMDE->setThreads(num_threads);
+	SMDE->setSubsampleRate(subsample_rate);
 
-		// ******** Disparity Estimation Code ******** //
+	// ******** Disparity Estimation Code ******** //
 #ifdef DEBUG_APP
-		std::cout << "Disparity Estimation Started..." << std::endl;
+	std::cout << "Disparity Estimation Started..." << std::endl;
 #endif // DEBUG_APP
 
-		cvc_time = get_rt();
-		SMDE->CostConst();
-		cvc_time = get_rt() - cvc_time;
+	cvc_time = get_rt();
+	SMDE->CostConst();
+	cvc_time = get_rt() - cvc_time;
 
-		cvf_time = get_rt();
-		SMDE->CostFilter_FGF();
-		cvf_time = get_rt() - cvf_time;
+	cvf_time = get_rt();
+	SMDE->CostFilter_FGF();
+	cvf_time = get_rt() - cvf_time;
 
-		dispsel_time = get_rt();
-		SMDE->DispSelect_CPU();
-		dispsel_time = get_rt() - dispsel_time;
+	dispsel_time = get_rt();
+	SMDE->DispSelect_CPU();
+	dispsel_time = get_rt() - dispsel_time;
 
-		pp_time = get_rt();
-		SMDE->PostProcess_CPU();
-		pp_time = get_rt() - pp_time;
+	pp_time = get_rt();
+	SMDE->PostProcess_CPU();
+	pp_time = get_rt() - pp_time;
 #ifdef DEBUG_APP
-		std::cout << "Disparity Estimation Complete." << std::endl;
+	std::cout << "Disparity Estimation Complete." << std::endl;
 #endif // DEBUG_APP
 
-		// ******** Display Disparity Maps  ******** //
-		SMDE->lDisMap.convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
-		SMDE->rDisMap.convertTo(rDispMap, CV_8U, scale_factor);
+	// ******** Display Disparity Maps  ******** //
+	SMDE->lDisMap.convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
+	SMDE->rDisMap.convertTo(rDispMap, CV_8U, scale_factor);
 
-		cv::cvtColor(lDispMap, leftDispMap, cv::COLOR_GRAY2RGB);
-		cv::cvtColor(lDispMap, rightDispMap, cv::COLOR_GRAY2RGB);
-		// ******** Display Disparity Maps  ******** //
+	cv::cvtColor(lDispMap, leftDispMap, cv::COLOR_GRAY2RGB);
+	cv::cvtColor(lDispMap, rightDispMap, cv::COLOR_GRAY2RGB);
+	// ******** Display Disparity Maps  ******** //
 
 #ifdef DEBUG_APP_MONITORS
-		cvc_time_avg = (cvc_time_avg * frame_count + cvc_time) / (frame_count + 1);
-		printf("STEREO GIF Module Times:\n");
-		printf("CVC Time:\t %4.2f ms   Avg Time:\t %4.2f\n", cvc_time / 1000, cvc_time_avg / 1000);
-		printf("CVF Time:\t %4.2f ms\n", cvf_time / 1000);
-		printf("DispSel Time:\t %4.2f ms\n", dispsel_time / 1000);
-		printf("PP Time:\t %4.2f ms\n", pp_time / 1000);
+	cvc_time_avg = (cvc_time_avg * frame_count + cvc_time) / (frame_count + 1);
+	printf("STEREO GIF Module Times:\n");
+	printf("CVC Time:\t %4.2f ms   Avg Time:\t %4.2f\n", cvc_time / 1000, cvc_time_avg / 1000);
+	printf("CVF Time:\t %4.2f ms\n", cvf_time / 1000);
+	printf("DispSel Time:\t %4.2f ms\n", dispsel_time / 1000);
+	printf("PP Time:\t %4.2f ms\n", pp_time / 1000);
 #endif // DEBUG_APP_MONITORS
-		frame_count++;
-	}
+	frame_count++;
 #ifdef DEBUG_APP_MONITORS
 	de_time_ms = (get_rt() - start_time) / 1000;
 	printf("DE Time:\t %4.2f ms\n", de_time_ms);
@@ -179,21 +149,12 @@ int StereoMatch::compute(float &de_time_ms)
 		{
 			errMask = cv::imread(mask_disc_filename, cv::IMREAD_GRAYSCALE);
 			cv::threshold(errMask, errMask, 254, 255, cv::THRESH_TOZERO); // set any grey to black
-			if (MatchingAlgorithm == STEREO_SGBM)
-				cv::cvtColor(errMask, rightDispMap, cv::COLOR_GRAY2RGB);
 			eDispMap = eDispMap.mul(errMask, 1 / 255.f);
 		}
 		else if (mask_mode == MASK_NONOCC)
 		{
 			errMask = cv::imread(mask_occl_filename, cv::IMREAD_GRAYSCALE);
-			if (MatchingAlgorithm == STEREO_SGBM)
-				cv::cvtColor(errMask, rightDispMap, cv::COLOR_GRAY2RGB);
 			eDispMap = eDispMap.mul(errMask, 1 / 255.f);
-		}
-		else
-		{
-			if (MatchingAlgorithm == STEREO_SGBM)
-				blankDispMap.copyTo(rightDispMap);
 		}
 		cvtColor(eDispMap, errDispMap, cv::COLOR_GRAY2RGB);
 
@@ -400,66 +361,22 @@ int StereoMatch::update_display(void)
 	return 0;
 }
 
-// #############################################################################################
-// # Setup for OpenCV implementation of Stereo matching using Semi-Global Block Matching (SGBM)
-// #############################################################################################
-int StereoMatch::setupOpenCVSGBM(int channels, int ndisparities)
-{
-	int mindisparity = 0;
-	int SADWindowSize = 5;
-
-	// Call the constructor for StereoSGBM
-	ssgbm = StereoSGBM::create(
-		mindisparity,								   // minDisparity = 0,
-		ndisparities,								   // numDisparities = 16,
-		SADWindowSize,								   // blockSize = 3,
-		8 * channels * SADWindowSize * SADWindowSize,  // P1 = 0,
-		32 * channels * SADWindowSize * SADWindowSize, // P2 = 0,
-		1,											   // disp12MaxDiff = 0,
-		63,											   // preFilterCap = 0,
-		10,											   // uniquenessRatio = 0,
-		100,										   // speckleWindowSize = 0,
-		32,											   // speckleRange = 0,
-		StereoSGBM::MODE_HH							   // mode = StereoSGBM::MODE_SGBM
-	);
-
-	return 0;
-}
-
 int StereoMatch::parse_cli(int argc, const char *argv[])
 {
 	if (argc == 1)
 	{
-		fprintf(stderr,"Usage: %s GIF|SGBM [[left.png right.png] disparity.png]\n",argv[0]);
-		return 1;
-	}
-	if (argc > 1)
-	{
-		std::string alg_mode = argv[1];
-		if (alg_mode == "GIF")
-		{
-			MatchingAlgorithm = STEREO_GIF;
-		}
-		std::cout << "Matching Algorithm: STEREO_GIF" << std::endl;
-		if (alg_mode == "SGBM")
-		{
-			MatchingAlgorithm = STEREO_SGBM;
-			std::cout << "Matching Algorithm: STEREO_SGBM" << std::endl;
-		}
-	}
-	if (argc == 2)
-	{
+		fprintf(stderr, "Usage: %s [[left.png right.png] disparity.png]\n", argv[0]);
 		curr_dataset = dataset_names[2];
 		ground_truth_data = true;
-		std::cout << "Daset used: " << curr_dataset << std::endl;
+		std::cout << "Demo mode. Daset used: " << curr_dataset << std::endl;
 		return 0;
 	}
-	if (argc == 3)
+	if (argc == 2)
 	{
 		std::cerr << "Can't just provide one image. We need a stereo pair." << std::endl;
 		return 1;
 	}
-	if (argc > 3)
+	if (argc > 2)
 	{
 		std::cout << "Stereo images provided." << std::endl;
 		left_img_filename = argv[2];
@@ -467,7 +384,7 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 		curr_dataset = "User";
 		user_dataset = true;
 	}
-	if (argc > 4)
+	if (argc > 3)
 	{
 		gt_img_filename = argv[4];
 		ground_truth_data = true;

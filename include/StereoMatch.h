@@ -102,7 +102,6 @@ private:
 	//Function prototypes
 	int setCameraResolution(unsigned int height, unsigned int width);
 	std::vector<Resolution> resolution_search(void);
-	int setupOpenCVSGBM(int, int);
 	int update_display(void);
 	int parse_cli(int argc, const char * argv[]);
 };
