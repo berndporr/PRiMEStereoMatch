@@ -75,7 +75,7 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) :
 #ifdef DISPLAY
 		update_display();
 #endif // DISPLAY
-		SMDE = new DispEst(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
+		SMDE = std::make_shared<DispEst>(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
 	}
 	else if(media_mode == DE_IMAGE)
 	{
@@ -106,7 +106,6 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev) :
 StereoMatch::~StereoMatch(void)
 {
 	printf("Shutting down StereoMatch Application\n");
-	delete SMDE;
 	if(media_mode == DE_VIDEO)
 		cap.release();
 	printf("Application Shut down\n");
@@ -577,8 +576,7 @@ int StereoMatch::update_dataset(std::string dataset_name)
 #ifdef DISPLAY
 	update_display();
 #endif // DISPLAY
-	delete SMDE;
-	SMDE = new DispEst(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
+	SMDE = std::make_shared<DispEst>(lFrame, rFrame, maxDis, num_threads, gotOCLDev);
 
 	error_threshold = (error_threshold/scale_factor)*scale_factor_next;
 	scale_factor = scale_factor_next;
