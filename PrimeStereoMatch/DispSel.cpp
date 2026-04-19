@@ -50,15 +50,17 @@ void *DS_X(void *thread_arg)
 
 int DispSel::CVSelect_thread(cv::Mat *costVol, const unsigned int maxDis, cv::Mat &dispMap, int threads)
 {
-	unsigned int hei = dispMap.rows;
+	int hei = dispMap.rows;
 
 	// Set up threads for x-loop
 	void *status;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_t DS_X_threads[hei];
-	DS_X_TD DS_X_TD_Array[hei];
+	std::vector<pthread_t> DS_X_threads;
+	DS_X_threads.resize(hei);
+	std::vector<DS_X_TD> DS_X_TD_Array;
+	DS_X_TD_Array.resize(hei);
 
 	for (int level = 0; level <= hei / threads; ++level)
 	{

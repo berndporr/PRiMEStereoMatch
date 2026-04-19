@@ -22,7 +22,7 @@ static cv::Mat convertTo(const cv::Mat &mat, int depth)
 class FastGuidedFilterImpl
 {
 public:
-    FastGuidedFilterImpl(int r, double eps, int s) : r(r), eps(eps), s(s) {}
+    FastGuidedFilterImpl(int r, double eps, int s) : r(r), s(s), eps(eps) {}
     virtual ~FastGuidedFilterImpl() {}
 
     cv::Mat filter(const cv::Mat &p, int depth);

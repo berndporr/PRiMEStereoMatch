@@ -99,6 +99,12 @@ private:
 
 	int update_display(void);
 	int parse_cli(int argc, const char * argv[]);
+    float get_rt() const {
+	struct timespec realtime;
+	clock_gettime(CLOCK_MONOTONIC,&realtime);
+	return (float)(realtime.tv_sec*1000000+realtime.tv_nsec/1000);
+    }
+
 };
 
 #endif //STEREOMATCH_H

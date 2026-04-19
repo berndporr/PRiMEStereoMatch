@@ -72,11 +72,6 @@ int StereoMatch::compute(float &de_time_ms)
 	// # Start of Disparity Map Creation
 	// #########################################################################
 
-	if ((lFrame.type() & CV_MAT_DEPTH_MASK) != CV_32F)
-	{
-		lFrame.convertTo(lFrame, CV_32F, 1 / 255.0f);
-		rFrame.convertTo(rFrame, CV_32F, 1 / 255.0f);
-	}
 	SMDE->setInputImages(lFrame, rFrame);
 	SMDE->setThreads(num_threads);
 	SMDE->setSubsampleRate(subsample_rate);

@@ -32,9 +32,17 @@ PrimeStereoMatch::~PrimeStereoMatch(void)
 
 int PrimeStereoMatch::setInputImages(cv::Mat leftImg, cv::Mat rightImg)
 {
-    assert(leftImg.type() == rightImg.type());
+    if (leftImg.type() != rightImg.type()) return 1;
     lImg = leftImg;
     rImg = rightImg;
+    if ((lImg.type() & CV_MAT_DEPTH_MASK) != CV_32F)
+    {
+	lImg.convertTo(lImg, CV_32F, 1 / 255.0f);
+    }
+    if ((rImg.type() & CV_MAT_DEPTH_MASK) != CV_32F)
+    {
+	rImg.convertTo(rImg, CV_32F, 1 / 255.0f);
+    }
     return 0;
 }
 
@@ -47,9 +55,9 @@ int PrimeStereoMatch::setThreads(unsigned int newThreads)
     return 0;
 }
 
-// #############################################################################################################
+// ##########################
 // # Cost Volume Construction
-// #############################################################################################################
+// ##########################
 int PrimeStereoMatch::CostConst()
 {
     int ret_val = 0;
@@ -82,8 +90,10 @@ int PrimeStereoMatch::CostConst_CPU()
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_t BCV_threads[maxDis];
-    buildCV_TD buildCV_TD_Array[maxDis];
+    std::vector<pthread_t> BCV_threads;
+    BCV_threads.resize(maxDis);
+    std::vector<buildCV_TD> buildCV_TD_Array;
+    buildCV_TD_Array.resize(maxDis);
 
     constructor.preprocess(lImg, lGrdX);
     constructor.preprocess(rImg, rGrdX);
@@ -125,9 +135,9 @@ int PrimeStereoMatch::CostConst_CPU()
     return 0;
 }
 
-// #############################################################################################################
+// #######################
 // # Cost Volume Filtering
-// #############################################################################################################
+// #######################
 int PrimeStereoMatch::CostFilter_FGF()
 {
     FastGuidedFilter fgf_left(lImg, GIF_R_WIN, GIF_EPS, subsample_rate);

@@ -428,8 +428,10 @@ void wgtMedian_thread(const Mat &Img, Mat &Dis, Mat &Valid, const int maxDis, co
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_t WM_row_threads[hei];
-    WM_row_TD WM_row_TD_Array[hei];
+    std::vector<pthread_t> WM_row_threads;
+    WM_row_threads.resize(hei);
+    std::vector<WM_row_TD> WM_row_TD_Array;
+    WM_row_TD_Array.resize(hei);
 
     for (int level = 0; level <= hei / threads; level++)
     {

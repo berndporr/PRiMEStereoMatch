@@ -55,10 +55,4 @@ using namespace cv;
 
 enum buff_id {CVC_LIMGR, CVC_LIMGG, CVC_LIMGB, CVC_RIMGR, CVC_RIMGG, CVC_RIMGB, CVC_LGRDX, CVC_RGRDX, CV_LCV, CV_RCV, DS_LDM, DS_RDM};
 
-static float get_rt(){
-	struct timespec realtime;
-	clock_gettime(CLOCK_MONOTONIC,&realtime);
-	return (float)(realtime.tv_sec*1000000+realtime.tv_nsec/1000);
-}
-
 #endif // COMFUNC_H
