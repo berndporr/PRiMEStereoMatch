@@ -240,6 +240,12 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 	if (argc == 1)
 	{
 		fprintf(stderr, "Usage: %s [[left.png right.png] disparity.png]\n", argv[0]);
+		fprintf(stderr, "You can also specify a different example dataset: %s ", argv[0]);
+		for (auto &ds : dataset_names)
+		{
+			fprintf(stderr, "%s|", ds.c_str());
+		}
+		fprintf(stderr, "\n");
 		curr_dataset = dataset_names[2];
 		ground_truth_data = true;
 		std::cout << "Demo mode. Daset used: " << curr_dataset << std::endl;
@@ -247,8 +253,19 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 	}
 	if (argc == 2)
 	{
-		std::cerr << "Can't just provide one image. We need a stereo pair." << std::endl;
-		return 1;
+		curr_dataset = "";
+		for (auto &ds : dataset_names)
+		{
+			if (ds == std::string(argv[1]))
+			{
+				curr_dataset = argv[1];
+				ground_truth_data = true;
+			}
+		}
+		if (curr_dataset == "") {
+			fprintf(stderr,"Unknown dataset name: %s\n",argv[1]);
+			return 1;
+		}
 	}
 	if (argc > 2)
 	{
