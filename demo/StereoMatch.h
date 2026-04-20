@@ -4,7 +4,10 @@
    Author: Charles Leech
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
-  ---------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------
+   Copyright (c) 2026 Bernd Porr, University of Glasgow
+   Email: bernd.porr@glasgow.ac.uk
+*/
 #ifndef STEREOMATCH_H
 #define STEREOMATCH_H
 
@@ -15,95 +18,74 @@
 #define MASK_NONOCC 2
 #define MASK_DISC 3
 
-//#define DEBUG_APP
+// #define DEBUG_APP
 #define DEBUG_APP_MONITORS
 
 static std::vector<std::string> dataset_names = std::vector<std::string>{"Art", "Books", "Cones", "Dolls", "Laundry", "Moebius", "Teddy"};
 
-struct Resolution{
-	unsigned int height;
-	unsigned int width;
-};
-
 class StereoMatch
 {
 public:
-	StereoMatch(int argc, const char *argv[], int gotOpenCLDev = 0);
+	StereoMatch(int argc, const char *argv[]);
 	~StereoMatch(void);
 
-	int de_mode;
-	int MatchingAlgorithm;
-	int mask_mode;
-	cv::Mat display_container;
+	void compute();
+	void display();
 
-	int compute();
-	int update_dataset(std::string dataset_name);
-	bool user_dataset = false;
-
-	//StereoSGBM Variables
-	cv::Ptr<StereoSGBM> ssgbm;
-
-	//Stereo GIF Variables
-	unsigned int subsample_rate = 4;
 private:
-
-	//Variables
-	bool end_de = false;
-	int gotOCLDev;
-	char cap_key;
-
+	int mask_mode = NO_MASKS;
+	cv::Mat display_container;
 	std::string left_img_filename, right_img_filename;
 	std::string gt_img_filename, mask_occl_filename, mask_disc_filename;
 	std::string curr_dataset;
-	std::mutex input_data_m;
 	bool ground_truth_data = false;
-	int mask_mode_next;
-	int scale_factor, scale_factor_next;
+	int scale_factor = 3;
 
-	//Display Variables
+	// Display Variables
 	cv::Mat leftInputImg, rightInputImg;
 	cv::Mat leftDispMap, rightDispMap;
-    cv::Mat gtDispMap, errDispMap;
-    cv::Mat blankDispMap;
+	cv::Mat gtDispMap, errDispMap;
+	cv::Mat blankDispMap;
 
-	//local disparity map containers
-    cv::Mat lDispMap, rDispMap, eDispMap;
-    cv::Mat errMask;
+	// local disparity map containers
+	cv::Mat lDispMap, rDispMap, eDispMap;
+	cv::Mat errMask;
 
-	//input values
-    int maxDis;
+	// input values
+	int maxDis;
 
-    //stage & process time measurements
-    double cvc_time, cvf_time, dispsel_time, pp_time;
-    double cvc_time_avg, cvf_time_avg, dispsel_time_avg, pp_time_avg;
-    unsigned int frame_count;
+	// stage & process time measurements
+	double cvc_time, cvf_time, dispsel_time, pp_time;
+	double cvc_time_avg, cvf_time_avg, dispsel_time_avg, pp_time_avg;
 
-    //Frame Holders & Camera object
+	// Frame Holders & Camera object
 	cv::Mat lFrame, rFrame, vFrame;
 
-	//Image rectification maps
+	// Image rectification maps
 	cv::Mat mapl[2], mapr[2];
 	cv::Rect cropBox;
 	cv::Mat lFrame_rec, rFrame_rec;
 	cv::Mat gtFrame;
 
-	//StereoSGBM Variables
-	double minVal, maxVal;
-	double minVal_gt, maxVal_gt;
 	cv::Mat imgDisparity16S;
 
-	//StereoGIF Variables
 	std::shared_ptr<PrimeStereoMatch> SMDE;
-	int num_threads;
+	int num_threads = 1;
+
+	int update_dataset(std::string dataset_name);
+	bool user_dataset = false;
+
+	// Stereo GIF Variables
+	unsigned int subsample_rate = 4;
 
 	int update_display(void);
-	int parse_cli(int argc, const char * argv[]);
-    float get_rt() const {
-	struct timespec realtime;
-	clock_gettime(CLOCK_MONOTONIC,&realtime);
-	return (float)(realtime.tv_sec*1000000+realtime.tv_nsec/1000);
-    }
-
+	int parse_cli(int argc, const char *argv[]);
+	float get_rt() const
+	{
+		struct timespec realtime;
+		clock_gettime(CLOCK_MONOTONIC, &realtime);
+		return (float)(realtime.tv_sec * 1000000 + realtime.tv_nsec / 1000);
+	}
 };
 
-#endif //STEREOMATCH_H
+#endif // STEREOMATCH_H

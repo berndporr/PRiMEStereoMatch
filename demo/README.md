@@ -1,5 +1,7 @@
 # Demo
 
+![alt tag](screenshot.png)
+
 ## How to run:
 
 ### Own images

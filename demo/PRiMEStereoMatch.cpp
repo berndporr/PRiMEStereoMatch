@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------
-   main.cpp - central Disparity Estimation Code
-  ---------------------------------------------------------------------------
    Author: Charles Leech
    Email: cl19g10 [at] ecs.soton.ac.uk
    Copyright (c) 2016 Charlie Leech, University of Southampton.
   ---------------------------------------------------------------------------
-   Author: Bernd Porr
+   Copyright (c) 2026 Bernd Porr, University of Glasgow
    Email: bernd.porr@glasgow.ac.uk
   */
 #include "StereoMatch.h"
@@ -15,15 +13,8 @@
 
 int main(int argc, const char *argv[])
 {
-	printf("Starting Stereo Matching Application.\n");
-
 	StereoMatch sm(argc, argv);
 	sm.compute();
-
-	imshow("PrimeStereoMatch", sm.display_container);
-	fprintf(stderr,"Press any key.\n");
-	waitKey(0);
-
-	printf("MAIN: Disparity Estimation Halted\n");
+    sm.display();
 	return 0;
 }

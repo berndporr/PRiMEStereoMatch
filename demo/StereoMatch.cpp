@@ -15,7 +15,7 @@
 // #############################################################################
 // # SM Preprocessing that we don't want to repeat
 // #############################################################################
-StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev)
+StereoMatch::StereoMatch(int argc, const char *argv[])
 {
 #ifdef DEBUG_APP
 	std::cout << "Stereo Matching for Depth Estimation." << std::endl;
@@ -34,9 +34,8 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev)
 	scale_factor = 3;
 
 	cvc_time_avg = 0;
-	frame_count = 0;
 
-	std::cout << "Loading " << curr_dataset << " as the default dataset." << std::endl;
+	std::cout << "Loading " << curr_dataset << "." << std::endl;
 	if (update_dataset(curr_dataset))
 		exit(1);
 
@@ -56,13 +55,11 @@ StereoMatch::~StereoMatch(void)
 // #############################################################################
 // # Complete GIF stereo matching process
 // #############################################################################
-int StereoMatch::compute()
+void StereoMatch::compute()
 {
 #ifdef DEBUG_APP
 	std::cout << "Computing Depth Map" << std::endl;
 #endif // DEBUG_APP
-
-	input_data_m.lock();
 
 	// #########################################################################
 	// # Start of Disparity Map Creation
@@ -76,7 +73,10 @@ int StereoMatch::compute()
 	// #########################################################################
 	// # End of Disparity Map Creation
 	// #########################################################################
+}
 
+void StereoMatch::display()
+{
 	// ******** Display Disparity Maps  ******** //
 	SMDE->lDisMap.convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
 	SMDE->rDisMap.convertTo(rDispMap, CV_8U, scale_factor);
@@ -84,8 +84,6 @@ int StereoMatch::compute()
 	cv::cvtColor(lDispMap, leftDispMap, cv::COLOR_GRAY2RGB);
 	cv::cvtColor(lDispMap, rightDispMap, cv::COLOR_GRAY2RGB);
 	// ******** Display Disparity Maps  ******** //
-
-	frame_count++;
 
 #ifdef DEBUG_APP
 	cv::imwrite("leftDisparityMap.png", leftDispMap);
@@ -119,14 +117,18 @@ int StereoMatch::compute()
 		printf("%%BP = %.2f%% \t Avg Err = %.2f\n", num_bad_pixels * 100 / num_pixels, avg_err);
 #endif // DEBUG_APP_MONITORS
 	}
-
-	input_data_m.unlock();
-
-	return 0;
+	const char title[] = "PrimeStereoMatch";
+	imshow(title, display_container);
+	while (getWindowProperty(title, WND_PROP_VISIBLE))
+	{
+		waitKey(100);
+	}
 }
 
 int StereoMatch::update_dataset(std::string dataset_name)
 {
+	int scale_factor_next = 3;
+	int mask_mode_next = NO_MASKS;
 	curr_dataset = dataset_name;
 	string data_dir = "data/";
 	if ((!dataset_name.compare("Cones")) || (!dataset_name.compare("Teddy")))
@@ -153,7 +155,6 @@ int StereoMatch::update_dataset(std::string dataset_name)
 		scale_factor_next = 4;
 	}
 
-	input_data_m.lock();
 	lFrame = cv::imread(left_img_filename, cv::IMREAD_COLOR);
 	if (lFrame.empty())
 	{
@@ -206,8 +207,6 @@ int StereoMatch::update_dataset(std::string dataset_name)
 	update_display();
 	SMDE = std::make_shared<PrimeStereoMatch>(lFrame.rows, lFrame.cols, maxDis, num_threads);
 	scale_factor = scale_factor_next;
-
-	input_data_m.unlock();
 	return 0;
 }
 
@@ -248,7 +247,7 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 		fprintf(stderr, "\n");
 		curr_dataset = dataset_names[2];
 		ground_truth_data = true;
-		std::cout << "Demo mode. Daset used: " << curr_dataset << std::endl;
+		std::cout << "Demo mode. Dataset used: " << curr_dataset << std::endl;
 		return 0;
 	}
 	if (argc == 2)
@@ -262,8 +261,9 @@ int StereoMatch::parse_cli(int argc, const char *argv[])
 				ground_truth_data = true;
 			}
 		}
-		if (curr_dataset == "") {
-			fprintf(stderr,"Unknown dataset name: %s\n",argv[1]);
+		if (curr_dataset == "")
+		{
+			fprintf(stderr, "Unknown dataset name: %s\n", argv[1]);
 			return 1;
 		}
 	}
