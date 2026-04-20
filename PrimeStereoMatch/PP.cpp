@@ -460,17 +460,6 @@ void wgtMedian_thread(const Mat &Img, Mat &Dis, Mat &Valid, const int maxDis, co
 void PP::processDM(Mat &lImg, Mat &rImg, Mat &lDisMap, Mat &rDisMap,
                    Mat &lValid, Mat &rValid, const int maxDis, int threads)
 {
-    //	lrCheck(lDisMap, rDisMap, lValid, rValid);
-    //	fillInv(lDisMap, rDisMap, lValid, rValid);
-
-    // color image should be 3x3 median filtered
-    // according to weightedMedianMatlab.m from CVPR11
-    // wgtMedian( lImg, rImg, lDisMap, rDisMap, lValid, rValid, maxDis);
-
-    //	wgtMedian_thread(lImg, lDisMap, lValid, maxDis, threads);
-    //	wgtMedian_thread(rImg, rDisMap, rValid, maxDis, threads);
-    // printf("Weighted-Median Filter Done\n");
-
     Mat lImg_8UC3, rImg_8UC3;
     // use colour feature images:
     lImg.convertTo(lImg_8UC3, CV_8UC3, 255);

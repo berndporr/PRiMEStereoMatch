@@ -28,12 +28,6 @@
 //OpenCV Header
 #include <opencv2/opencv.hpp>
 
-#define BASE_DIR "../"
-
-//Algorithm Definitions
-#define STEREO_SGBM 0
-#define STEREO_GIF  1
-
 #define OCV_DE 0
 #define OCL_DE 1
 
@@ -42,11 +36,6 @@
 
 #define MAX_CPU_THREADS 8
 #define MIN_CPU_THREADS 1
-
-#define MAX_GPU_THREADS 256
-#define MIN_GPU_THREADS 4
-
-#define OCL_STATS 0
 
 using namespace cv;
 

@@ -18,11 +18,14 @@
 class PrimeStereoMatch
 {
 public:
-    PrimeStereoMatch(int height, int width, const int maxDisparity, int numThreads);
+    PrimeStereoMatch(int height, int width, const int maxDisparity = 64, int numThreads = MAX_CPU_THREADS);
     ~PrimeStereoMatch(void);
 
     cv::Mat lDisMap;
     cv::Mat rDisMap;
+
+    cv::Mat lValid;
+    cv::Mat rValid;
 
     // Public Methods
     int setInputImages(cv::Mat l, cv::Mat r);
@@ -52,8 +55,6 @@ private:
     cv::Mat rGrdX;
     cv::Mat *lcostVol = nullptr;
     cv::Mat *rcostVol = nullptr;
-    cv::Mat lValid;
-    cv::Mat rValid;
 
     CVC constructor;
     CVF filter;

@@ -33,11 +33,10 @@ public:
 
 	int de_mode;
 	int MatchingAlgorithm;
-	int error_threshold;
 	int mask_mode;
 	cv::Mat display_container;
 
-	int compute(float& de_time);
+	int compute();
 	int update_dataset(std::string dataset_name);
 	bool user_dataset = false;
 

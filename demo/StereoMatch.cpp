@@ -29,11 +29,8 @@ StereoMatch::StereoMatch(int argc, const char *argv[], int gotOpenCLDev)
 		exit(1);
 
 	maxDis = 64;
-	de_mode = OCL_DE;
 	num_threads = MAX_CPU_THREADS;
-	gotOCLDev = gotOpenCLDev;
 	mask_mode = MASK_NONOCC;
-	error_threshold = 4;
 	scale_factor = 3;
 
 	cvc_time_avg = 0;
@@ -59,13 +56,12 @@ StereoMatch::~StereoMatch(void)
 // #############################################################################
 // # Complete GIF stereo matching process
 // #############################################################################
-int StereoMatch::compute(float &de_time_ms)
+int StereoMatch::compute()
 {
 #ifdef DEBUG_APP
 	std::cout << "Computing Depth Map" << std::endl;
 #endif // DEBUG_APP
 
-	float start_time = get_rt();
 	input_data_m.lock();
 
 	// #########################################################################
@@ -90,10 +86,6 @@ int StereoMatch::compute(float &de_time_ms)
 	// ******** Display Disparity Maps  ******** //
 
 	frame_count++;
-#ifdef DEBUG_APP_MONITORS
-	de_time_ms = (get_rt() - start_time) / 1000;
-	printf("DE Time:\t %4.2f ms\n", de_time_ms);
-#endif // DEBUG_APP_MONITORS
 
 #ifdef DEBUG_APP
 	cv::imwrite("leftDisparityMap.png", leftDispMap);
@@ -106,7 +98,6 @@ int StereoMatch::compute(float &de_time_ms)
 		// Can only be done with images as golden reference is required.
 		cv::absdiff(lDispMap, gtFrame, eDispMap);
 		eDispMap(cv::Rect(0, 0, maxDis + 1, eDispMap.rows)).setTo(cv::Scalar(0));
-		cv::threshold(eDispMap, eDispMap, error_threshold * (CHAR_MAX / maxDis), 255, cv::THRESH_TOZERO);
 
 		if (mask_mode == MASK_DISC)
 		{
@@ -131,7 +122,6 @@ int StereoMatch::compute(float &de_time_ms)
 
 	input_data_m.unlock();
 
-	imshow("InputOutput", display_container);
 	return 0;
 }
 
@@ -215,7 +205,6 @@ int StereoMatch::update_dataset(std::string dataset_name)
 	blankDispMap = cv::Mat(rFrame.rows, rFrame.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 	update_display();
 	SMDE = std::make_shared<PrimeStereoMatch>(lFrame.rows, lFrame.cols, maxDis, num_threads);
-	error_threshold = (error_threshold / scale_factor) * scale_factor_next;
 	scale_factor = scale_factor_next;
 
 	input_data_m.unlock();
@@ -243,7 +232,6 @@ int StereoMatch::update_display(void)
 	lFrame.copyTo(leftInputImg);
 	rFrame.copyTo(rightInputImg);
 	cv::cvtColor(gtFrame, gtDispMap, cv::COLOR_GRAY2RGB);
-	imshow("InputOutput", display_container);
 	return 0;
 }
 
