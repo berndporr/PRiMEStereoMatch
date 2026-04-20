@@ -18,7 +18,7 @@
 class PrimeStereoMatch
 {
 public:
-    PrimeStereoMatch(int height, int width, const int maxDisparity = 64, int numThreads = MAX_CPU_THREADS);
+    PrimeStereoMatch(cv::Size imageSize, const int maxDisparity = 64, int numThreads = MAX_CPU_THREADS);
 
     ~PrimeStereoMatch(void);
 

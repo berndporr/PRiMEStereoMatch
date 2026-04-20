@@ -7,8 +7,8 @@
   ---------------------------------------------------------------------------*/
 #include "PrimeStereoMatch.h"
 
-PrimeStereoMatch::PrimeStereoMatch(int height, int width, const int maxDisparity, int numThreads)
-    : hei(height), wid(width), maxDis(maxDisparity), threads(numThreads)
+PrimeStereoMatch::PrimeStereoMatch(cv::Size imageSize, const int maxDisparity, int numThreads)
+    : hei(imageSize.height), wid(imageSize.width), maxDis(maxDisparity), threads(numThreads)
 {
     lcostVol = new cv::Mat[maxDis];
     rcostVol = new cv::Mat[maxDis];

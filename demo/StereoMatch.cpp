@@ -205,7 +205,7 @@ int StereoMatch::update_dataset(std::string dataset_name)
 	imgDisparity16S = cv::Mat(lFrame.rows, lFrame.cols, CV_16S);
 	blankDispMap = cv::Mat(rFrame.rows, rFrame.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 	update_display();
-	SMDE = std::make_shared<PrimeStereoMatch>(lFrame.rows, lFrame.cols, maxDis, num_threads);
+	SMDE = std::make_shared<PrimeStereoMatch>(cv::Size(lFrame.cols, lFrame.rows), maxDis, num_threads);
 	scale_factor = scale_factor_next;
 	return 0;
 }
