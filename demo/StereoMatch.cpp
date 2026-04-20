@@ -78,8 +78,8 @@ void StereoMatch::compute()
 void StereoMatch::display()
 {
 	// ******** Display Disparity Maps  ******** //
-	SMDE->lDisMap.convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
-	SMDE->rDisMap.convertTo(rDispMap, CV_8U, scale_factor);
+	SMDE->getLDisp().convertTo(lDispMap, CV_8U, scale_factor); // scale factor used to compare error with ground truth
+	SMDE->getRDisp().convertTo(rDispMap, CV_8U, scale_factor);
 
 	cv::cvtColor(lDispMap, leftDispMap, cv::COLOR_GRAY2RGB);
 	cv::cvtColor(lDispMap, rightDispMap, cv::COLOR_GRAY2RGB);

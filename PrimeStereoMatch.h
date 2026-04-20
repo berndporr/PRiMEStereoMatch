@@ -12,20 +12,39 @@
 #include "PrimeStereoMatch/PP.h"
 #include "PrimeStereoMatch/fastguidedfilter.h"
 
-//
-// Top-level Disparity Estimation Class
-//
+/**
+ * Top-level Disparity Estimation Class 
+ */
 class PrimeStereoMatch
 {
 public:
     PrimeStereoMatch(int height, int width, const int maxDisparity = 64, int numThreads = MAX_CPU_THREADS);
+
     ~PrimeStereoMatch(void);
 
-    cv::Mat lDisMap;
-    cv::Mat rDisMap;
+    const cv::Mat getLDisp() const {
+        return lDisMap;
+    }
 
-    cv::Mat lValid;
-    cv::Mat rValid;
+    const cv::Mat getDisp() const {
+        return lDisMap;
+    }
+
+    const cv::Mat getRDisp() const {
+        return rDisMap;
+    }
+
+    const cv::Mat getLValid() const {
+        return lValid;
+    }
+
+    const cv::Mat getValid() const {
+        return lValid;
+    }
+
+    const cv::Mat getRValid() const {
+        return rValid;
+    }
 
     // Public Methods
     int setInputImages(cv::Mat l, cv::Mat r);
@@ -43,6 +62,12 @@ private:
     // Private Variable
     cv::Mat lImg;
     cv::Mat rImg;
+
+    cv::Mat lDisMap;
+    cv::Mat rDisMap;
+
+    cv::Mat lValid;
+    cv::Mat rValid;
 
     int hei;
     int wid;
